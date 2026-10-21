@@ -1,0 +1,27 @@
+{
+  "case_id": "co-pt-dispersion-c",
+  "paper_title": "Dispersion-controlled Pt/TiO2 catalysts for CO oxidation",
+  "paper_url": "https://example.org/papers/pt-dispersion",
+  "licence": "CC-BY-4.0",
+  "published": "2022-11-30",
+  "post_cutoff": false,
+  "reaction": "CO oxidation",
+  "sweep_variable": "dispersion",
+  "points": [
+    {"label": "D20", "value": 0.2, "catalyst": {"metal": "Pt", "support": "TiO2", "loading_wt_pct": 0.5, "dispersion": 0.2}},
+    {"label": "D50", "value": 0.5, "catalyst": {"metal": "Pt", "support": "TiO2", "loading_wt_pct": 0.5, "dispersion": 0.5}},
+    {"label": "D80", "value": 0.8, "catalyst": {"metal": "Pt", "support": "TiO2", "loading_wt_pct": 0.5, "dispersion": 0.8}}
+  ],
+  "feed": {"co_pct": 1.0, "o2_pct": 20.0, "other": {}, "balance": "N2"},
+  "catalyst_mass_mg": 100.0,
+  "flow_ml_min": 200.0,
+  "ghsv_per_h": null,
+  "ramp_K_min": 2.0,
+  "missing": [],
+  "measured": [
+    {"label": "D20", "t50_K": 480.0, "t50_unc_K": 10.0, "source": "Table 1"},
+    {"label": "D50", "t50_K": 455.0, "t50_unc_K": 10.0, "source": "Table 1"},
+    {"label": "D80", "t50_K": 435.0, "t50_unc_K": 10.0, "source": "Table 1"}
+  ],
+  "digitised_by": ["erin", "frank"]
+}

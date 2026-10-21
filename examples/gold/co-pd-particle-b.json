@@ -1,0 +1,29 @@
+{
+  "case_id": "co-pd-particle-b",
+  "paper_title": "Particle-size effect of Pd/CeO2 in CO oxidation",
+  "paper_url": "https://example.org/papers/pd-particle",
+  "licence": "CC-BY-4.0",
+  "published": "2021-03-15",
+  "post_cutoff": false,
+  "reaction": "CO oxidation",
+  "sweep_variable": "particle_nm",
+  "points": [
+    {"label": "2nm-Pd", "value": 2, "catalyst": {"metal": "Pd", "support": "CeO2", "loading_wt_pct": 1.0, "particle_nm": 2}},
+    {"label": "5nm-Pd", "value": 5, "catalyst": {"metal": "Pd", "support": "CeO2", "loading_wt_pct": 1.0, "particle_nm": 5}},
+    {"label": "10nm-Pd", "value": 10, "catalyst": {"metal": "Pd", "support": "CeO2", "loading_wt_pct": 1.0, "particle_nm": 10}},
+    {"label": "20nm-Pd", "value": 20, "catalyst": {"metal": "Pd", "support": "CeO2", "loading_wt_pct": 1.0, "particle_nm": 20}}
+  ],
+  "feed": {"co_pct": 2.0, "o2_pct": 10.0, "other": {"H2O": 2.0}, "balance": "N2"},
+  "catalyst_mass_mg": 25.0,
+  "flow_ml_min": null,
+  "ghsv_per_h": 60000.0,
+  "ramp_K_min": 10.0,
+  "missing": ["GHSV definition basis"],
+  "measured": [
+    {"label": "2nm-Pd", "t50_K": 430.0, "t50_unc_K": 12.0, "source": "Fig. 2"},
+    {"label": "5nm-Pd", "t50_K": 445.0, "t50_unc_K": 10.0, "source": "Fig. 2"},
+    {"label": "10nm-Pd", "t50_K": 470.0, "t50_unc_K": 11.0, "source": "Fig. 2"},
+    {"label": "20nm-Pd", "t50_K": 505.0, "t50_unc_K": 9.0, "source": "Fig. 2"}
+  ],
+  "digitised_by": ["carol", "dave"]
+}

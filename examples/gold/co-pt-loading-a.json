@@ -1,0 +1,31 @@
+{
+  "case_id": "co-pt-loading-a",
+  "paper_title": "CO oxidation over Pt/Al2O3: effect of metal loading",
+  "paper_url": "https://example.org/papers/pt-loading",
+  "licence": "CC-BY-4.0",
+  "published": "2019-06-01",
+  "post_cutoff": false,
+  "reaction": "CO oxidation",
+  "sweep_variable": "loading_wt_pct",
+  "points": [
+    {"label": "0.1Pt", "value": 0.1, "catalyst": {"metal": "Pt", "support": "Al2O3", "loading_wt_pct": 0.1, "particle_nm": 2.1, "dispersion": 0.55, "prep": "incipient wetness; calcined 673 K"}},
+    {"label": "0.5Pt", "value": 0.5, "catalyst": {"metal": "Pt", "support": "Al2O3", "loading_wt_pct": 0.5, "particle_nm": 2.4, "dispersion": 0.48, "prep": "incipient wetness; calcined 673 K"}},
+    {"label": "1.0Pt", "value": 1.0, "catalyst": {"metal": "Pt", "support": "Al2O3", "loading_wt_pct": 1.0, "particle_nm": 2.9, "dispersion": 0.40, "prep": "incipient wetness; calcined 673 K"}},
+    {"label": "2.0Pt", "value": 2.0, "catalyst": {"metal": "Pt", "support": "Al2O3", "loading_wt_pct": 2.0, "particle_nm": 3.8, "dispersion": 0.31, "prep": "incipient wetness; calcined 673 K"}},
+    {"label": "5.0Pt", "value": 5.0, "catalyst": {"metal": "Pt", "support": "Al2O3", "loading_wt_pct": 5.0, "particle_nm": 5.1, "dispersion": 0.23, "prep": "incipient wetness; calcined 673 K"}}
+  ],
+  "feed": {"co_pct": 1.0, "o2_pct": 4.0, "other": {}, "balance": "N2"},
+  "catalyst_mass_mg": 50.0,
+  "flow_ml_min": 100.0,
+  "ghsv_per_h": null,
+  "ramp_K_min": 5.0,
+  "missing": ["reactor inner diameter"],
+  "measured": [
+    {"label": "0.1Pt", "t50_K": 520.0, "t50_unc_K": 8.0, "curve": [[400.0, 0.02], [460.0, 0.1], [520.0, 0.5], [580.0, 0.9]], "source": "Fig. 3a"},
+    {"label": "0.5Pt", "t50_K": 470.5, "t50_unc_K": 9.0, "curve": [[410.0, 0.03], [450.0, 0.15], [470.5, 0.5], [510.0, 0.85]], "source": "Fig. 3a"},
+    {"label": "1.0Pt", "t50_K": 440.0, "t50_unc_K": 7.0, "curve": [[380.0, 0.02], [420.0, 0.12], [440.0, 0.5], [480.0, 0.88]], "source": "Fig. 3a"},
+    {"label": "2.0Pt", "t50_K": 415.0, "t50_unc_K": 10.0, "curve": [[360.0, 0.03], [395.0, 0.14], [415.0, 0.5], [450.0, 0.86]], "source": "Fig. 3b"},
+    {"label": "5.0Pt", "t50_K": 395.0, "t50_unc_K": 8.0, "curve": [[340.0, 0.02], [375.0, 0.12], [395.0, 0.5], [430.0, 0.9]], "source": "Fig. 3b"}
+  ],
+  "digitised_by": ["alice", "bob"]
+}
