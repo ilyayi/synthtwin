@@ -9,6 +9,7 @@ const fmt=v=>v==null||isNaN(v)?'—':Math.abs(v)>=1e5||Math.abs(v)<0.01&&v!==0?(
 
 /* each step's panel registers itself here: STEP_PANELS[step id] = render fn */
 const STEP_PANELS={};
+const STEP_BINDS={};   // per step: (s, P) => wire inputs that update in place, without a re-render
 
 /* ---------------------------------------------------------------- icons (inline SVG) */
 const IC={

@@ -106,3 +106,34 @@
   .svbox video{display:none}
   .clink.flash{animation:none;box-shadow:inset 0 0 0 2px var(--cy)}
 }
+/* the mixing gate (reactor scale): Da = t_mix / t_chem on a log strip, live stir rate and chemistry */
+.mg{margin:10px 0 4px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.025);box-shadow:inset 0 0 0 1px var(--line2);display:flex;flex-direction:column;gap:8px}
+.mg-head{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink)}
+.mg-v{margin-left:auto;font:600 11px/1 var(--mono);padding:4px 8px;border-radius:7px;letter-spacing:.02em}
+.mg-v.lumped{color:var(--ok);box-shadow:inset 0 0 0 1px rgba(79,211,154,.45)}
+.mg-v.marginal{color:var(--warn);box-shadow:inset 0 0 0 1px rgba(230,180,80,.5)}
+.mg-v.cfd{color:#a99cf2;box-shadow:inset 0 0 0 1px rgba(144,133,233,.55)}
+.mg-why{margin:0!important;font-size:12.5px;color:var(--ink2)}
+.mg-nums{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--ink3)}
+.mg-nums b{font:600 13px/1 var(--mono);color:var(--ink)}
+.mg-nums em{font-style:normal;color:var(--ink3)}
+.mg-alt{color:var(--ink3);font-size:11.5px}
+.mg-strip{position:relative;height:16px;border-radius:8px;display:flex;overflow:visible;margin-top:2px}
+.mg-strip .z{display:block;height:100%}
+.mg-strip .z.lumped{width:33.33%;background:rgba(79,211,154,.16);border-radius:8px 0 0 8px}
+.mg-strip .z.marginal{width:16.67%;background:rgba(230,180,80,.18)}
+.mg-strip .z.cfd{width:50%;background:rgba(144,133,233,.2);border-radius:0 8px 8px 0}
+.mg-dot,.mg-ghost{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;transition:left .15s ease}
+.mg-dot{background:var(--ink);box-shadow:0 0 0 2px var(--bg,#141a22)}
+.mg-dot.lumped{background:var(--ok)}.mg-dot.marginal{background:var(--warn)}.mg-dot.cfd{background:#9085e9}
+.mg-ghost{box-shadow:inset 0 0 0 2px var(--ink3);background:transparent}
+.mg-ax{display:flex;justify-content:space-between;font:400 10.5px/1 var(--mono);color:var(--ink3);margin-top:-2px}
+.mg-ctl{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.mg-rpm{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2)}
+.mg-rpm input{width:150px;accent-color:var(--cu2)}
+.mg-rpm output{font:600 12px/1 var(--mono);color:var(--ink);min-width:62px}
+.mg-chem{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mg-chem .chip i{font-style:normal;color:var(--ink3);font-family:var(--mono);font-size:11px}
+.mg-chem .chip.on{box-shadow:inset 0 0 0 1px var(--cu2);color:var(--ink)}
+.mg-src{margin:0!important;font-size:11.5px;color:var(--ink3)}
+@media (prefers-reduced-motion:reduce){.mg-dot,.mg-ghost{transition:none}}

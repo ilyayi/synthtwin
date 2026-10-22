@@ -63,6 +63,8 @@ def test_full_flow(agent: engine.Agent, settle, prompts: list[str]) -> None:
                                    "formula": "dT/dt = 1", "icon": "chart"}]  # unknown icon -> chart
     assert sc[0]["links"] == ["nucleation"] and sc[0]["methods"] == ["continuum"]
     assert sc[1]["processes"][0]["icon"] == "collide"
+    mx = s["phases"]["stack"]["mixing"]                                       # the mixing gate
+    assert mx["verdict"] == "marginal" and mx["alternatives"][0]["verdict"] == "cfd"
 
     agent.confirm(sid, {})
     s = settle(agent, sid)

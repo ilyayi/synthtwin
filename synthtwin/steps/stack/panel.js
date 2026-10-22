@@ -79,6 +79,44 @@ function scalesOf(s,P){                            // the stored scales, with an
   (P.scales||[]).forEach(x=>have[x.id]=x);
   return SCALE_ORDER.map(id=>have[id]||built[id]).filter(Boolean)}
 
+/* the mixing gate (find-simulations protocol): Da = t_mix / t_chem decides whether the reactor scale
+   needs CFD. Live: the stir rate rescales t_mix (both Grenville and a simulated blend time go as 1/N),
+   the chemistry chips swap t_chem; nothing is saved. */
+const MG_VERDICT={lumped:'well mixed · lumped reactor',marginal:'marginal · CFD-lite check',cfd:'mixing-limited · reactor CFD'};
+const MG_REASON={lumped:'The liquid is uniform before the reaction starts: a lumped, well-mixed reactor is exact.',
+  marginal:'Mixing and reaction overlap: a CFD-lite check of the vessel decides.',
+  cfd:'The reaction runs inside the injection plume before the vessel mixes: the flow sets where and at what local excess it happens, so the reactor scale needs CFD.'};
+const mgVerdict=da=>da<0.1?'lumped':da<1?'marginal':'cfd';
+const mgT=t=>t<1?`${fmt(t*1e3)} ms`:t<120?`${fmt(t)} s`:`${fmt(t/60)} min`;
+const mgPos=da=>Math.max(0,Math.min(100,(Math.log10(da)+3)/6*100));
+function mixGate(P){const m=P.mixing;if(!m||!m.Da)return'';
+  const chem=[{process:m.process||'this study',t_chem_s:m.t_chem_s},...(m.alternatives||[])];
+  const corr=m.t_mix_from==='given'&&m.grenville_s?` <span class="mg-alt">Grenville ${mgT(m.grenville_s)} (conservative)</span>`:'';
+  return `<div class="mg" data-mg>
+   <div class="mg-head">${icon('stir','lg2')}<b>Mixing gate</b><span class="mg-v ${m.verdict}" data-mgv>${MG_VERDICT[m.verdict]}</span></div>
+   <p class="mg-why" data-mgw>${esc(MG_REASON[m.verdict])}</p>
+   <div class="mg-nums"><span>t<sub>mix</sub> <b data-mgt>${mgT(m.t_mix_s)}</b> <em>${esc(m.t_mix_from==='given'?(m.t_mix_source||'simulated'):'Grenville θ₉₅')}</em>${corr}</span>
+    <span>t<sub>chem</sub> <b data-mgc>${mgT(m.t_chem_s)}</b> <em data-mgp>${esc(m.process||'')}</em></span>
+    <span>Da <b data-mgd>${fmt(m.Da)}</b></span></div>
+   <div class="mg-strip"><i class="z lumped"></i><i class="z marginal"></i><i class="z cfd"></i>
+    ${chem.slice(1).map((c,j)=>`<span class="mg-ghost" data-mgg="${j+1}" style="left:${mgPos(m.t_mix_s/c.t_chem_s)}%" title="${esc(c.process)}"></span>`).join('')}
+    <span class="mg-dot ${m.verdict}" data-mgdot style="left:${mgPos(m.Da)}%"></span></div>
+   <div class="mg-ax"><span>10⁻³</span><span>10⁻²</span><span>0.1</span><span>1</span><span>10</span><span>100</span><span>10³</span></div>
+   <div class="mg-ctl">${m.rpm?`<label class="mg-rpm">stir rate <input type="range" min="100" max="1500" step="25" value="${m.rpm}" data-mgr> <output data-mgo>${fmt(m.rpm)} rpm</output></label>`:''}
+    ${chem.length>1?`<div class="mg-chem"><span class="lbl" style="margin:0">chemistry</span>${chem.map((c,j)=>`<button type="button" class="chip ${j?'':'on'}" data-mgx="${j}">${esc(c.process)} <i>${mgT(c.t_chem_s)}</i></button>`).join('')}</div>`:''}</div>
+   <p class="mg-src">${esc(m.vessel||'')}${m.t_chem_source?` · t<sub>chem</sub>: ${esc(m.t_chem_source)}`:''}</p></div>`}
+STEP_BINDS.stack=(s,P)=>{const box=document.querySelector('[data-mg]'),m=P.mixing;if(!box||!m)return;
+  const chem=[{process:m.process||'this study',t_chem_s:m.t_chem_s},...(m.alternatives||[])];let ci=0;
+  const q=k=>box.querySelector(`[data-${k}]`);
+  const upd=()=>{const r=q('mgr'),rpm=r?+r.value:m.rpm,tm=m.rpm?m.t_mix_s*m.rpm/rpm:m.t_mix_s,c=chem[ci],da=tm/c.t_chem_s,v=mgVerdict(da);
+    if(r)q('mgo').textContent=`${rpm} rpm`;q('mgt').textContent=mgT(tm);q('mgc').textContent=mgT(c.t_chem_s);q('mgp').textContent=c.process;
+    q('mgd').textContent=fmt(da);const vv=q('mgv');vv.className='mg-v '+v;vv.textContent=MG_VERDICT[v];q('mgw').textContent=MG_REASON[v];
+    const d=q('mgdot');d.className='mg-dot '+v;d.style.left=mgPos(da)+'%';
+    box.querySelectorAll('[data-mgg]').forEach(g=>{const j=+g.dataset.mgg;g.style.left=mgPos(tm/chem[j].t_chem_s)+'%';g.hidden=j===ci});
+    box.querySelectorAll('[data-mgx]').forEach(b=>b.classList.toggle('on',+b.dataset.mgx===ci))};
+  const r=q('mgr');r&&(r.oninput=upd);
+  box.querySelectorAll('[data-mgx]').forEach(b=>b.onclick=()=>{ci=+b.dataset.mgx;upd()})};
+
 /* simulation visuals: /api/viz items for this study, per scale */
 function studyVizKey(s){const t=((s.problem||{}).material||'')+' '+(s.title||'');
   if(/\bcds\b|cadmium sulfide/i.test(t))return 'cds';if(/\b(gold|au)\b/i.test(t))return 'gold';return null}
@@ -173,6 +211,7 @@ function scaleCard(s,P,sc,i,n){
      <span class="sruler">${icon('ruler','lg2')}${esc(ruler)}</span></div><span class="stag">${M.name}</span></div>
    <p class="ssum">${esc(sc.summary||M.summary)}</p>
    ${procs?`<div class="sprocs">${procs}</div>`:''}
+   ${sc.id==='reactor'?mixGate(P):''}
    ${vizBox(s,P,sc)}
    ${meth?`<div class="smeth"><span class="lbl" style="margin:0">methods here</span>${meth}</div>`
     :`<p class="sassumed">${esc(M.assumed)}</p>`}

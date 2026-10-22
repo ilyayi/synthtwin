@@ -119,6 +119,7 @@ function bindPanel(s,ph){
     if(!el)return;el.scrollIntoView({behavior:'smooth',block:'center'});
     el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')};});
   document.querySelectorAll('[data-vtab]').forEach(b=>b.onclick=e=>{e.stopPropagation();const[k,j]=b.dataset.vtab.split(':');AG.vtab[k]=+j;render(AG.s)});
+  STEP_BINDS[ph]&&STEP_BINDS[ph](s,s.phases[ph]||{});
   document.querySelectorAll('[data-viz]').forEach(b=>b.onclick=()=>{const[k]=b.dataset.viz.split(':');lightbox(AG.s,s.phases[ph]||{},k)});
   const rb=$('#agres');rb&&(rb.onclick=async()=>{const m={};document.querySelectorAll('[data-mq]').forEach(i=>{if(i.value!=='')m[i.dataset.mq]=+i.value});
     const nt=$('#agnotes');try{await post(`/api/agent/${s.id}/result`,{measured:m,notes:nt?nt.value:''});refresh()}catch(e){toast(e.message)}})}

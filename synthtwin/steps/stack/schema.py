@@ -38,15 +38,25 @@ SCALE_ITEM = {"type": "object", "properties": {
     "passes_down": {"type": "string"}, "links": _STRS, "methods": _STRS},
     "required": ["id", "title", "summary", "processes"]}
 
+MIXING = {"type": "object", "properties": {
+    "process": {"type": "string"}, "t_chem_s": {"type": "number"}, "t_chem_source": {"type": "string"},
+    "vessel": {"type": "string"}, "rpm": {"type": "number"}, "impeller_mm": {"type": "number"},
+    "vessel_mm": {"type": "number"}, "power_number": {"type": "number"},
+    "t_mix_s": {"type": "number"}, "t_mix_source": {"type": "string"}, "note": {"type": "string"},
+    "alternatives": {"type": "array", "items": {"type": "object", "properties": {
+        "process": {"type": "string"}, "t_chem_s": {"type": "number"}}, "required": ["process", "t_chem_s"]}}},
+    "required": ["process", "t_chem_s", "t_chem_source", "vessel"]}
+
 SCHEMAS = {
     "stack": steps.llm_schema({"methods": {"type": "array", "items": {"type": "object", "properties": {
         "id": {"type": "string"}, "selected": {"type": "boolean"}, "insight": {"type": "string"}},
         "required": ["id", "selected", "insight"]}}, "chain": {"type": "array", "items": CHAIN_LINK},
-        "scales": {"type": "array", "items": SCALE_ITEM}},
+        "scales": {"type": "array", "items": SCALE_ITEM}, "mixing": MIXING},
         ["methods", "chain"]),
     "stack_other": steps.llm_schema({"chain": {"type": "array", "items": CHAIN_LINK},
                                      "methods": {"type": "array", "items": GENERIC_METHOD},
-                                     "scales": {"type": "array", "items": SCALE_ITEM}},
+                                     "scales": {"type": "array", "items": SCALE_ITEM},
+                                     "mixing": MIXING},
                                     ["chain", "methods"]),
 }
 

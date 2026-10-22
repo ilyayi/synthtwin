@@ -107,6 +107,10 @@ def scripted(system: str, prompt: str, schema: dict) -> dict:
             {"id": "atomistic", "title": "Atoms", "summary": "the atoms",
              "processes": [{"name": "Coalescence", "what": "small particles merge", "icon": "collide"}]},
             {"id": "galactic", "title": "not a scale", "processes": [{"name": "x", "what": "y"}]}]
+    if "mixing" in props:   # the mixing gate: a stirred flask and a slow reduction, plus a fast alternative
+        ans["mixing"] = {"process": "citrate reduction", "t_chem_s": 30, "t_chem_source": "growth model",
+                         "vessel": "100 mL flask, stir bar", "rpm": 600, "impeller_mm": 25, "vessel_mm": 58,
+                         "alternatives": [{"process": "NaBH4 reduction", "t_chem_s": 0.01}]}
     if "recipe" in props:   # no materials/equipment: the robot step's fill lists them
         ans["recipe"] = {"title": "R", "why": "w", "steps": ["a"], "expected": "15 nm", "checks": ["c"], "risks": ["r"]}
     elif "materials" in props:

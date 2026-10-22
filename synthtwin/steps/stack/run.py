@@ -10,11 +10,12 @@ from typing import Callable
 
 from synthtwin.steps.bench import bench as benchmod
 from synthtwin.core import catalog, systems
+from synthtwin.steps.stack import mixing
 from synthtwin.steps.stack.schema import clean_chain, clean_scales
 
 
 def apply(agent, s: dict, ans: dict) -> Callable | None:
-    """Store the chain and scales it designed, its method ticks, and the estimate."""
+    """Store the chain and scales it designed, the mixing gate, its method ticks, and the estimate."""
     P = s["phases"]["stack"]
     if isinstance(ans.get("chain"), list) and ans["chain"]:
         P["chain"] = clean_chain(ans["chain"])
@@ -22,6 +23,9 @@ def apply(agent, s: dict, ans: dict) -> Callable | None:
         cleaned = clean_scales(ans["scales"], P.get("chain") or [], P.get("methods") or [])
         if cleaned:
             P["scales"] = cleaned
+    g = mixing.gate(ans.get("mixing"))
+    if g:
+        P["mixing"] = g
     if ans.get("methods") and not systems.is_builtin(s["problem"]):
         seen, ms = set(), []
         for m in ans["methods"]:
