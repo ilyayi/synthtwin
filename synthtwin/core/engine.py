@@ -32,7 +32,7 @@ from typing import Any, Callable
 import yaml
 
 from synthtwin import protocols, steps
-from synthtwin.core import catalog, runner, systems, toolbox
+from synthtwin.core import catalog, harness, runner, systems, toolbox
 from synthtwin.steps.prior import prior
 
 # the pipeline's shape comes from the steps' own step.json files (one source of truth)
@@ -91,6 +91,7 @@ class Agent:
         self.glock = threading.Lock()
         self.robot = yaml.safe_load(cfg.robot.read_text()) if cfg.robot.is_file() else {}
         self._lib = None
+        self._hv = None
         self._recover()
 
     def _recover(self) -> None:
@@ -141,6 +142,12 @@ class Agent:
             fb = self.cfg.data_dir / "feedback.jsonl"
             self._lib = lib + (drun.load_library(fb) if fb.exists() else [])
         return self._lib
+
+    def harness(self) -> harness.Harness:
+        """The data dir's self-improving harness (overlays + lessons per step)."""
+        if self._hv is None:
+            self._hv = harness.Harness(self.cfg.data_dir)
+        return self._hv
 
     def cards(self) -> dict[str, dict]:
         return {c["case_id"]: c for c in prior.load_cards(self.cfg.cards)}
@@ -205,6 +212,7 @@ class Agent:
         if not confirm:
             raise ValueError(f"nothing to confirm at {phase}")
         confirm(self, sid, s, body)
+        self.reflect_async(sid, phase, body)
         return {"ok": True}
 
     def retry(self, sid: str) -> dict:
@@ -228,6 +236,27 @@ class Agent:
 
     def result(self, sid: str, body: dict) -> dict:
         return steps.run("robot").result(self, sid, body)
+
+    def reflect_async(self, sid: str, step: str, body: dict | None = None, trigger: str = "confirm") -> None:
+        """Reflect on a confirmed step in a background thread; never blocks or
+        breaks the step itself. Failures land in the step's notes."""
+        if not self.cfg.llm:
+            return
+
+        def go():
+            try:
+                s = self.load(sid)
+                harness.reflect(self.cfg.llm, self.harness(), step,
+                                harness.trajectory(sid, step, s, body, trigger=trigger))
+            except Exception as exc:
+                def note(ss):
+                    ss["phases"].setdefault(step, {}).setdefault("notes", []).append(
+                        f"harness reflect failed: {type(exc).__name__}: {exc}")
+                try:
+                    self.mutate(sid, note)
+                except Exception:
+                    pass
+        threading.Thread(target=go, daemon=True).start()
 
     def context(self, s: dict) -> dict:
         ph = s["phase"]
@@ -281,8 +310,10 @@ class Agent:
             ctx["scales"] = P["stack"]["scales"]
         return ctx
 
-    def turn(self, sid: str, extra: str = "") -> dict:
-        s = self.load(sid)
+    def turn_parts(self, s: dict) -> tuple[str, str, str, dict]:
+        """The (schema key, system prompt, user prompt, state context) of one turn,
+        rebuilt from the stored study state: what the engine sends, and what a
+        harness probe replays on a recorded study."""
         ph = s["phase"]
         robot = f"{self.robot.get('name', 'robot')}: T {self.robot.get('temperature_C')} C, volume " \
                 f"{self.robot.get('volume_ml')} mL, stocks {', '.join(self.robot.get('reagents', []))}, " \
@@ -297,10 +328,20 @@ a kMC or phase-field code), name it as the tool, mark it '(install)' and include
             f"The build has a {self.cfg.build_minutes} min budget: mark methods that would not fit as not selected "
             "and say so." if self.cfg.build_minutes else "There is no time limit: select long atomistic runs "
             "(hours or days) when they supply a parameter that matters; say how long they take."))
+        ctx = self.context(s)
         hist = [m for m in s["chat"] if m["role"] in ("user", "agent")][-14:]
-        prompt = ("STATE:\n" + json.dumps(self.context(s), default=str)[:60000] + "\n\nCHAT (oldest first):\n"
+        prompt = ("STATE:\n" + json.dumps(ctx, default=str)[:60000] + "\n\nCHAT (oldest first):\n"
                   + "\n".join(f"{m['role'].upper()} [{m['phase']}]: {m['text']}" for m in hist)
-                  + (f"\n\nNOTE: {extra}" if extra else "") + "\n\nWrite your next turn.")
+                  + "\n\nWrite your next turn.")
+        return key, system, prompt, ctx
+
+    def turn(self, sid: str, extra: str = "") -> dict:
+        s = self.load(sid)
+        ph = s["phase"]
+        key, system, prompt, ctx = self.turn_parts(s)
+        system = self.harness().inject(ph, system, ctx)   # the step's overlay + lessons, when present
+        if extra:
+            prompt = prompt.replace("\n\nWrite your next turn.", f"\n\nNOTE: {extra}\n\nWrite your next turn.")
         # the stack designer may search for simulation studies of similar systems (lessons per chain link);
         # the step's step.json "models" picks plan or work for the turn
         ans = self.cfg.llm.role(steps.role(ph, "turn")).ask(system, prompt, SCHEMAS[key],

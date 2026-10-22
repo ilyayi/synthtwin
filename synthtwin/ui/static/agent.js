@@ -109,9 +109,11 @@ function render(s){const prev=AG.s;AG.s=s;
       <h2>${esc(s.title)}</h2><p class="help">${esc(s.text)}</p></div>
      <div class="psteps">${ph.map((p,i)=>{const cls=i<ci||s.status==='complete'?'done':i===ci?(s.busy?'busy':'cur'):'pending';
        const word=cls==='done'?'done':cls==='busy'?'working':cls==='cur'?'needs you':'';
-       return `<button class="pst ${cls} ${p.id===view?'view':''}" type="button" data-v="${p.id}" ${i>ci?'disabled':''} title="${esc(p.short)}"><span class="pi">${cls==='done'?icon('check'):icon(p.icon||p.id)}</span><b>${esc(p.name)}</b><span class="ss">${esc(p.short)}</span><span class="s">${cls==='busy'?'<span class="spin"></span>':''}${word}</span></button>`}).join('')}</div>
+       return `<button class="pst ${cls} ${p.id===view?'view':''}" type="button" data-v="${p.id}" ${i>ci?'disabled':''} title="${esc(p.short)}"><span class="pi">${cls==='done'?icon('check'):icon(p.icon||p.id)}</span><b>${esc(p.name)}</b><span class="ss">${esc(p.short)}</span><span class="s">${cls==='busy'?'<span class="spin"></span>':''}${word}</span>${typeof HV!=='undefined'&&HV.index?HV.badge(p.id):''}</button>`}).join('')}</div>
      ${panel(s,view)}`;
     document.querySelectorAll('.pst[data-v]').forEach(b=>b.onclick=()=>{AG.view=b.dataset.v;render(AG.s)});
+    document.querySelectorAll('.pst [data-hvb]').forEach(b=>{const open=()=>{location.hash='#/harness/'+b.dataset.hvb};
+      b.onclick=e=>{e.stopPropagation();open()};b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();open()}}});
     bindPanel(s,view)}
   clearTimeout(AG.poll);if(s.busy)AG.poll=setTimeout(()=>{if(location.hash.startsWith('#/s/'+s.id))refresh()},1500)}
 
