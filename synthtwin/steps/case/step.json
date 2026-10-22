@@ -1,7 +1,7 @@
 {
   "id": "case",
   "order": 6,
-  "icon": "chart",
+  "icon": "checklist",
   "protocols": [
     "design"
   ],

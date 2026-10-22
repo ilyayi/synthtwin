@@ -13,11 +13,12 @@ async function hvIndex(){if(!HV.index){try{HV.index=(await api('/api/harness')).
 HV.badge=function(step){const s=(HV.index||[]).find(x=>x.step===step);
   if(!s||(!s.overlay_version&&!s.lessons))return '';
   return `<span class="hv-b" data-hvb="${esc(step)}" role="link" tabindex="0"
-   title="this step runs an evolved harness: overlay${s.overlay_version?' v'+s.overlay_version:''} + ${s.lessons} lesson(s)">harness${s.overlay_version?' v'+s.overlay_version:''} · ${s.lessons} lesson${s.lessons===1?'':'s'}</span>`};
+   title="this step runs an evolved harness: overlay${s.overlay_version?' v'+s.overlay_version:''} + ${s.lessons} lesson(s)">${s.overlay_version?`harness v${s.overlay_version}`:`${s.lessons} lesson${s.lessons===1?'':'s'}`}</span>`};
 
 const HV_DEC={adopt:'adopted a candidate',merge:'merged candidates',keep_base:'kept the base prompt'};
 const HV_VERDICT={'no observed effect':'no effect'};
 
+const hvClip=(x,n)=>{x=String(x||'');return x.length>n?x.slice(0,n).replace(/\s+\S*$/,'')+'…':x};
 /* ---------------------------------------------------------------- cards */
 function hvCard(s){const le=s.last_evolve;
   return `<button class="hv-card" type="button" data-hvc="${esc(s.step)}">
@@ -27,7 +28,7 @@ function hvCard(s){const le=s.last_evolve;
    <div class="hv-meta"><span>protocol <b>v${esc(s.protocol_version)}</b></span>
     <span><b>${s.lessons}</b> lesson${s.lessons===1?'':'s'}</span>
     <span>last evolve <b>${le?esc(HV_DEC[le.decision]||le.decision||'—'):'never'}</b></span></div>
-   ${le&&le.reason?`<p class="hv-reason">${esc(String(le.reason).slice(0,180))}</p>`:''}
+   ${le&&le.reason?`<p class="hv-reason">${esc(hvClip(le.reason,160))}</p>`:''}
   </button>`}
 
 async function hvPage(step){
@@ -39,7 +40,7 @@ async function hvPage(step){
    <div class="shead"><a class="back" href="#/">← All studies</a>
     <p class="eyebrow" style="margin-top:18px">SynthTwin · self-improving harness</p>
     <h2>Harness</h2>
-    <p class="lede" style="max-width:72ch">The model stays frozen; what improves is the harness around each step. After you confirm a step, a reflector writes at most one lesson from what happened. An <b>evolve</b> run drafts two overlay edits — one about how the agent works, one about what a practitioner knows — replays the step's turn on recorded studies under each, and adopts one only if it behaves better. Everything is versioned; roll back anytime.</p></div>
+    <p class="lede" style="max-width:72ch">The model stays frozen; the harness around each step improves. Each confirmed step leaves at most one lesson. <b>Evolve</b> replays the step on recorded studies under two candidate overlays and adopts one only if it does better. Every version can be rolled back.</p></div>
    <section style="padding-top:4px"><div class="hv-grid">${st.map(hvCard).join('')}</div></section></div>`;
   document.querySelectorAll('[data-hvc]').forEach(b=>b.onclick=()=>{location.hash='#/harness/'+b.dataset.hvc});
 }
@@ -88,7 +89,7 @@ async function hvDetail(step){
     <p class="help">The step's agent turn, replayed on ${ev.studies?.length||0} recorded stud${ev.studies?.length===1?'y':'ies'} (${(ev.studies||[]).map(id=>`<a href="#/s/${esc(id)}/${esc(d.step)}">${esc(id)}</a>`).join(', ')}) under the base prompt and each candidate overlay.</p>
     ${(ev.probes||[]).map(p=>hvProbe(p)).join('')}
     <div class="hv-comp"><b>${esc(HV_DEC[ev.composer?.decision]||ev.composer?.decision||'')}</b>${ev.composer?.choice?` <span class="pill">${esc(ev.composer.choice)}</span>`:''}
-     ${hvChecks(ev.composer?.checks||{})}<p class="why">${esc(ev.composer?.reason||'')}</p></div>
+     ${hvChecks(ev.composer?.checks||{})}<p class="why hv-rep" title="click to expand">${esc(ev.composer?.reason||'')}</p></div>
     <details class="more"><summary>Candidates as drafted</summary><div class="inner">
      ${['inv','dom'].map(k=>{const c=ev.candidates?.[k]||{};return `<p><b>${k.toUpperCase()}</b> — ${c.action==='EDIT'?'edit':'KEEP_BASE'}${c.evidence?` · traced to: ${esc(c.evidence)}`:''}</p>
       ${c.overlay?`<div class="hv-pre">${esc(c.overlay)}</div>`:''}<p class="help" style="margin:4px 0 12px">${esc(c.moment||'')}</p>`}).join('')}
@@ -112,6 +113,7 @@ async function hvDetail(step){
      </tbody></table></div></div></details>
    </section></div>`;
   hvDiffRender();
+  $('#app').querySelectorAll('.hv-rep').forEach(el=>el.onclick=()=>el.classList.toggle('open'));
   $('#hvev').onclick=()=>hvEvolve(d.step);
   const go=$('#hvgo');go&&(go.onclick=async()=>{go.disabled=true;
     try{await post(`/api/harness/${d.step}/rollback`,{version:+$('#hvrb').value});hvDetail(d.step)}catch(e){$('#hvjob').textContent=e.message;go.disabled=false}});
@@ -135,7 +137,7 @@ function hvProbe(p){const A=p.arms||{};
   return `<div class="hv-probe"><div class="hv-study">${esc(p.study)}</div>
    <div class="hv-arms">${Object.entries(A).map(([arm,o])=>`<div class="hv-arm">
     <span class="who"><b>${arm==='base'?'BASE':arm.toUpperCase()}</b>${o.delivered?'':'<span class="hv-v fail">no delivery</span>'}${o.ready?'<span class="hv-v ok">ready</span>':''}</span>
-    <p>${esc((o.reply||'').slice(0,400)||'(no reply)')}</p></div>`).join('')}</div></div>`}
+    <p class="hv-rep" title="click to expand">${esc(o.reply||'(no reply)')}</p></div>`).join('')}</div></div>`}
 
 function hvChecks(c){return `<div class="hv-lrow" style="margin-top:8px">${Object.entries(c).map(([k,v])=>
   `<span class="hv-v ${esc(v)}" title="${esc(k)}: ${esc(v)}">${esc(k)} · ${esc(v)}</span>`).join('')}</div>`}
@@ -153,14 +155,14 @@ function hvDiffLines(a,b){const A=(a||'').split('\n'),B=(b||'').split('\n');
   return out}
 function hvDiffRender(){const el=$('#hvdiff');if(!el||!HV.d)return;const O=HV.d.overlays||{};
   const a=String(O[String(HV.diff.a)]??''),b=String(O[String(HV.diff.b)]??'');
-  el.innerHTML=hvDiffLines(a,b).map(([m,t])=>
+  el.innerHTML=hvDiffLines(a,b).filter(([m,t])=>!(m==='-'&&!t.trim())).map(([m,t])=>
     `<div class="${m==='-'?'d':m==='+'?'a':'ctx'}">${m===' '?'' :m==='-'?'−':'+'} ${esc(t)||' '}</div>`).join('')||'<div class="ctx">(identical)</div>'}
 
 /* ---------------------------------------------------------------- evolve job */
 function hvJobLine(j){const el=$('#hvjob');if(!el||!j)return;
   el.innerHTML=j.status==='running'?`<span class="spin"></span> evolving ${esc(j.step)} (probing recorded studies)…`
    :j.status==='failed'?`<span class="err">${esc(j.error||'failed')}</span>`
-   :`done · ${esc(HV_DEC[j.result?.composer?.decision]||j.result?.composer?.decision||'')} — ${esc((j.result?.composer?.reason||'').slice(0,200))}`;
+   :`done · ${esc(HV_DEC[j.result?.composer?.decision]||j.result?.composer?.decision||'')} — ${esc(hvClip(j.result?.composer?.reason,200))}`;
   clearTimeout(HV.poll);
   if(j.status==='running')HV.poll=setTimeout(async()=>{const r=await api(`/api/harness/${j.step}/evolve?id=${encodeURIComponent(j.id)}`).catch(()=>null);
     if(r&&r.job){hvJobLine(r.job);if(r.job.status!=='running')hvDetail(j.step)}},2500)}

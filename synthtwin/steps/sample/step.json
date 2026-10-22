@@ -1,7 +1,7 @@
 {
   "id": "sample",
   "order": 4,
-  "icon": "chart",
+  "icon": "spread",
   "protocols": [
     "validate"
   ],

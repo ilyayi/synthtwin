@@ -1,7 +1,7 @@
 {
   "id": "bench",
   "order": 5,
-  "icon": "chart",
+  "icon": "balance",
   "protocols": [
     "build-and-qa",
     "validate"

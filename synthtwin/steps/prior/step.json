@@ -1,7 +1,7 @@
 {
   "id": "prior",
   "order": 2,
-  "icon": "chart",
+  "icon": "books",
   "protocols": [
     "search-data"
   ],

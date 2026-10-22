@@ -146,7 +146,7 @@ def test_confirm_reflects_in_background(agent: engine.Agent, settle) -> None:
     agent.confirm(sid, {"phase": "goal"})
     ledger = agent.cfg.data_dir / "harness" / "goal" / "ledger.jsonl"
     for _ in range(100):                                    # the reflect thread, never blocking the step
-        if ledger.is_file():
+        if ledger.is_file() and ledger.read_text().strip():      # written by the reflector thread
             break
         time.sleep(0.1)
     rows = [json.loads(x) for x in ledger.read_text().splitlines()]
@@ -178,7 +178,7 @@ def test_robot_result_reflects(agent: engine.Agent, settle) -> None:
     assert agent.load("hv-robot")["phases"]["robot"]["results"][0]["inside"] is True
     ledger = agent.cfg.data_dir / "harness" / "robot" / "ledger.jsonl"
     for _ in range(100):
-        if ledger.is_file():
+        if ledger.is_file() and ledger.read_text().strip():      # written by the reflector thread
             break
         time.sleep(0.1)
     assert json.loads(ledger.read_text().splitlines()[0])["trigger"] == "robot result"
@@ -218,7 +218,7 @@ def test_harness_api(hvbase) -> None:
     assert call(url + "/api/harness/nope")[0] == 404
 
     code, job = call(url + "/api/harness/stack/evolve", {})          # stub proposes KEEP_BASE both
-    assert code == 202 and job["status"] == "running"
+    assert code == 202 and job["status"] in ("running", "done")   # the stub may finish first
     for _ in range(100):
         _, cur = call(url + f"/api/harness/stack/evolve?id={job['id']}")
         if cur["job"]["status"] != "running":

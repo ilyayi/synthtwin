@@ -20,7 +20,7 @@ const EXAMPLES=['I need gold nanoparticles around 15 nm with a narrow size distr
   'Seeded growth of Au to 40 nm: which seed-to-gold ratio and temperature?'];
 function agentStartHtml(){return `<div class="astart">
   <h2 style="margin:0;font-size:clamp(26px,3vw,38px)">Tell the agent your problem.</h2>
-  <p class="lede" style="margin:0">It will agree a measurable goal with you, show what related studies swept and found, propose a simulation stack with time and insight, test it on known results, simulate your case and suggest a recipe for the robot. You confirm every step.</p>
+  <p class="lede" style="margin:0">Say what you want to make and what matters about it. You confirm every step.</p>
   <textarea id="aq" placeholder="What do you want to make, and what matters about it?"></textarea>
   <div class="ex">${EXAMPLES.map(e=>`<button class="chip" type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join('')}</div>
   <p class="err" id="aerr"></p>
@@ -77,11 +77,16 @@ function render(s){const prev=AG.s;AG.s=s;
   const view=AG.view&&ph.findIndex(p=>p.id===AG.view)<=ci?AG.view:cur;
   // chat
   const log=$('#aglog');const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<40;
-  let lastPh=null;const rows=[];
+  const rows=[],groups=[];
   for(const m of s.chat){const r=rows[rows.length-1];if(r&&r.m.role===m.role&&r.m.phase===m.phase&&r.m.text===m.text)r.n++;else rows.push({m,n:1})}
-  log.innerHTML=rows.map(({m,n})=>{let d='';if(m.phase!==lastPh){lastPh=m.phase;d=`<div class="pdiv">${esc((ph.find(p=>p.id===m.phase)||{}).name||m.phase)}</div>`}
-    return d+`<div class="msg ${m.role}">${chatMd(m.text)}${mdTag(m)}${n>1?`<span class="rep">×${n}</span>`:''}</div>`}).join('')
+  for(const r of rows){const g=groups[groups.length-1];if(g&&g.ph===r.m.phase)g.rows.push(r);else groups.push({ph:r.m.phase,rows:[r]})}
+  // one fold per step: the step on screen and the current one open, earlier ones folded unless opened
+  AG.chatOpen=AG.chatOpen||{};
+  log.innerHTML=groups.map((g,i)=>{const open=g.ph===view||g.ph===cur||AG.chatOpen[i];const nm=(ph.find(p=>p.id===g.ph)||{}).name||g.ph;
+    return `<details class="cgrp" data-cg="${i}" ${open?'open':''}><summary class="pdiv">${esc(nm)}${open?'':` · ${g.rows.length} message${g.rows.length>1?'s':''}`}</summary>
+      ${g.rows.map(({m,n})=>`<div class="msg ${m.role}">${chatMd(m.text)}${mdTag(m)}${n>1?`<span class="rep">×${n}</span>`:''}</div>`).join('')}</details>`}).join('')
     +(s.busy?`<div class="typing"><span class="spin"></span>${esc(s.busy)}…</div>`:'');
+  log.querySelectorAll('[data-cg]').forEach(d=>d.ontoggle=()=>{AG.chatOpen[d.dataset.cg]=d.open});
   if(atBottom||!prev||prev.chat.length!==s.chat.length||!!prev.busy!==!!s.busy)log.scrollTop=log.scrollHeight;
   const last=[...s.chat].reverse().find(m=>m.meta&&m.meta.cost_usd!=null);
   $('#agllm').innerHTML=`<span class="mdtime">${last?`${(last.meta.ms/1000).toFixed(0)} s / turn`:''}</span>${mdSwitch()}`;

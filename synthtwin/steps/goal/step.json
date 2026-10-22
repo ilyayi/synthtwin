@@ -1,7 +1,7 @@
 {
   "id": "goal",
   "order": 1,
-  "icon": "chart",
+  "icon": "target",
   "protocols": [
     "onboard-problem"
   ],

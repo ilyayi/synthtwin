@@ -137,3 +137,11 @@
 }
 .pstrip .pproto i{font-style:normal;display:inline-block;margin:0 6px 2px 0;padding:1px 8px;border:1px solid var(--line2);border-radius:999px;cursor:help}
 .pstrip .pproto em{font-style:normal;opacity:.6;font-size:.9em}
+/* chat folded by step: the open step reads as before, earlier ones are one line */
+.cgrp{display:flex;flex-direction:column;gap:inherit}
+.cgrp>summary{list-style:none;cursor:pointer;text-align:center}
+.cgrp>summary::-webkit-details-marker{display:none}
+.cgrp:not([open])>summary{opacity:.75}
+.cgrp:not([open])>summary:hover{opacity:1;color:var(--ink2)}
+.cgrp:not([open])>summary{padding:0}
+.cgrp:not([open])+.cgrp:not([open]){margin-top:-4px}

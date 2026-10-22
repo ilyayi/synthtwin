@@ -1,7 +1,7 @@
 {
   "id": "stack",
   "order": 3,
-  "icon": "chart",
+  "icon": "layers",
   "protocols": [
     "find-simulations"
   ],
