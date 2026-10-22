@@ -121,3 +121,12 @@ def test_uncalibrated_still_runs_with_wider_bands() -> None:
     half = (raw["size_mean_nm"]["high"] - raw["size_mean_nm"]["low"]) / 2 * cal.band_factor
     assert cands[0].predicted["size_mean_nm"].high - cands[0].predicted["size_mean_nm"].low \
         == pytest.approx(2 * half, rel=1e-9)
+
+
+def test_candidates_carry_6040_labels() -> None:
+    cands = run(PROBLEM, np_stub, CAL, validated=VALIDATED)
+    labels = [c.label for c in cands]
+    assert labels.count("exploit") == 5 and labels.count("explore") == 4   # 9 x 0.6 = 5.4 -> 5
+    assert cands[0].label == "exploit"                 # the best score is always exploited
+    assert all(c.label == "exploit" for c in run(PROBLEM, np_stub, CAL, validated=VALIDATED, explore=0.0))
+    assert all(c.label == "explore" for c in run(PROBLEM, np_stub, CAL, validated=VALIDATED, explore=1.0))

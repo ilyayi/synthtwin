@@ -38,6 +38,18 @@ def step_assets(name: str) -> bytes:
                          for sid in steps.ORDER if (steps.folder(sid) / name).is_file())
 CASES = HERE / "cases"
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
+
+_B6040: dict | None = None
+
+
+def bench6040_data() -> dict:
+    """The committed 60/40 literature-campaign benchmark (lib/design/data/bench6040.json)."""
+    global _B6040
+    if _B6040 is None:
+        p = HERE.parent / "lib" / "design" / "data" / "bench6040.json"
+        _B6040 = json.loads(p.read_text()) if p.is_file() else {
+            "error": "benchmark data not generated yet (lib/design/bench6040.py)", "datasets": {}}
+    return _B6040
 CT = {".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript",
       ".woff2": "font/woff2", ".svg": "image/svg+xml", ".png": "image/png"}
 
@@ -386,6 +398,8 @@ def make_handler(app: App):
                     return self._json(OPTIONS)
                 if path == "/api/viz":
                     return self._json({"enabled": app.viz.root is not None, "items": app.viz.items()})
+                if path == "/api/bench6040":
+                    return self._json(bench6040_data())
                 if path.startswith("/viz/"):
                     f = app.viz.path(path[5:])
                     if f is None:
