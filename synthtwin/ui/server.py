@@ -22,7 +22,7 @@ from typing import Any
 from synthtwin import protocols, steps
 from synthtwin.core import toolbox
 from synthtwin.steps.bench import bench, builder
-from synthtwin.core import catalog, engine
+from synthtwin.core import catalog, engine, harness
 from synthtwin.lib.viz import VIZ_CT, Viz
 from synthtwin.core import runner
 from synthtwin.ui.stages import STAGES
@@ -77,6 +77,41 @@ class App:
         self._screen_meta: dict | None = None
         if self.screen_index:
             self.screens.mkdir(parents=True, exist_ok=True)
+        self.hv = harness.Harness(cfg.data_dir)
+        self.hjobs: dict[str, dict] = {}
+
+    # ---------------------------------------------------------- harness
+    def harness_status(self) -> dict:
+        return {"steps": [self.hv.status(sid) for sid in steps.ORDER]}
+
+    def harness_job(self, step: str, jid: str | None = None) -> dict | None:
+        jobs = [j for j in self.hjobs.values() if j["step"] == step]
+        if jid:
+            try:
+                return self.hjobs[jid]
+            except KeyError:
+                raise KeyError(f"no harness job {jid!r}") from None
+        return jobs[-1] if jobs else None
+
+    def harness_evolve(self, step: str, k: int = 2) -> dict:
+        """Run one evolve (propose-probe-compose) as a background job."""
+        steps.get(step)
+        if not self.agent or not self.agent.cfg.llm:
+            raise ValueError("the study agent is off (start the server with --llm)")
+        job = {"id": f"hev-{time.strftime('%m%d-%H%M%S')}-{int(time.time() * 1000) % 1000:03d}",
+               "step": step, "kind": "evolve", "status": "running", "at": time.time(),
+               "error": None, "result": None}
+        self.hjobs[job["id"]] = job
+        agent, llm = self.agent, self.agent.cfg.llm
+
+        def go():
+            try:
+                job["result"] = harness.evolve(agent, llm, llm, step, k=k)
+                job["status"] = "done"
+            except Exception as exc:
+                job.update(status="failed", error=f"{type(exc).__name__}: {exc}")
+        threading.Thread(target=go, daemon=True).start()
+        return job
 
     # ---------------------------------------------------------- storage
     def path(self, sid: str) -> Path:
@@ -397,6 +432,19 @@ def make_handler(app: App):
                                        "variants": bench.VARIANTS, "protocols": protocols.manifest()})
                 if path == "/api/studies":
                     return self._json(app.list())
+                if path == "/api/harness":
+                    return self._json(app.harness_status())
+                m = re.match(r"^/api/harness/([a-z]+)$", path)
+                if m:
+                    try:
+                        return self._json(app.hv.detail(m.group(1)))
+                    except ValueError:                       # unknown step
+                        pass
+                m = re.match(r"^/api/harness/([a-z]+)/evolve$", path)
+                if m:
+                    q = self.path.split("?", 1)[1] if "?" in self.path else ""
+                    jid = q.split("id=")[-1].split("&")[0] if "id=" in q else None
+                    return self._json({"job": app.harness_job(m.group(1), jid or None)})
                 if path == "/api/screen":
                     return self._json(app.screen_meta())
                 if path == "/api/screens":
@@ -433,6 +481,15 @@ def make_handler(app: App):
                 m = re.match(r"^/api/screen/([a-z0-9-]+)/queue$", self.path)
                 if m:
                     return self._json(app.screen_queue(m.group(1), body))
+                m = re.match(r"^/api/harness/([a-z]+)/(evolve|rollback)$", self.path)
+                if m:
+                    step, act = m.groups()
+                    if act == "evolve":
+                        return self._json(app.harness_evolve(step, k=int(body.get("k") or 2)), 202)
+                    v = body.get("version")
+                    if not isinstance(v, int):
+                        raise ValueError("rollback needs an integer overlay version")
+                    return self._json(app.hv.rollback(step, v))
                 if self.path == "/api/agent" or re.match(r"^/api/agent/[^/]+/", self.path):
                     if not app.agent:
                         raise ValueError("the study agent is off (start the server with --llm)")

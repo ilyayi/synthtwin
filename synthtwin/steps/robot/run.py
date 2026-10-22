@@ -90,4 +90,5 @@ def result(agent, sid: str, body: dict) -> dict:
                                   "library recipe, so the next study calibrates on it."})
     agent.mutate(sid, put)
     agent._lib = None
+    agent.reflect_async(sid, "robot", body, trigger="robot result")   # results vs predicted bands
     return {"ok": True}
