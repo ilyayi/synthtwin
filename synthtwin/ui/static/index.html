@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="/static/steps.css">
 <link rel="stylesheet" href="/static/screen.css">
 <link rel="stylesheet" href="/static/harness.css">
+<link rel="stylesheet" href="/static/pitch.css">
 <style>
 /* page layer: layout only; tokens, buttons, cards, pills, step cards live in theme.css */
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
@@ -106,13 +107,14 @@ textarea{width:100%;min-height:110px;padding:12px;font-size:15px}
 </style></head>
 <body class="navd">
 <header class="topnav"><a class="logo" href="#/"><span class="orb"></span>SynthTwin</a>
-  <nav><a href="#/pipeline">Pipeline</a><a href="#/cases">Case studies</a><a href="#/mine">Your studies</a><a href="#/screen">Auto-search</a><a href="#/optimizer">60/40 test</a><a href="#/harness">Harness</a><a class="btn cu small" href="#/new">Start a study</a></nav></header>
+  <nav><a href="#/overview">Overview</a><a href="#/pipeline">Pipeline</a><a href="#/cases">Case studies</a><a href="#/mine">Your studies</a><a href="#/screen">Auto-search</a><a href="#/optimizer">Choosing rule</a><a href="#/harness">Self-improvement</a><a class="btn cu small" href="#/new">Start a study</a></nav></header>
 <main id="app"></main>
 <script src="/static/common.js"></script>
 <script src="/static/steps.js"></script>
 <script src="/static/agent.js"></script>
 <script src="/static/screen.js"></script>
 <script src="/static/harness.js"></script>
+<script src="/static/pitch.js"></script>
 <script>
 const WORD={pending:'waiting',running:'running',done:'done',warn:'done, caveat',failed:'stopped',awaiting_user:'needs you',skipped:'skipped',queued:'queued',complete:'complete'};
 const PCLS={pending:'queued',running:'running',done:'done',warn:'warn',failed:'attention',awaiting_user:'you',skipped:'queued'};
@@ -302,6 +304,7 @@ function alertBox(box,e){let p=box.querySelector('.err');if(!p){p=document.creat
 async function route(){clearTimeout(timer);clearTimeout(AG.poll);clearTimeout(SC.poll);const h=location.hash||'#/';
   if(h.startsWith('#/s/')){const[id,v]=h.slice(4).split('/');AG.want=v||null;return study(decodeURIComponent(id))}
   if(h==='#/harness'||h.startsWith('#/harness/')){return HV.page(h.startsWith('#/harness/')?decodeURIComponent(h.slice(10)):null)}
+  if(h==='#/overview')return pitchPage();
   if(h==='#/optimizer')return BX.page();
   if(h==='#/screen'||h.startsWith('#/screen/')){return SC.page(h.startsWith('#/screen/')?decodeURIComponent(h.slice(9)):null)}
   const a={'#/pipeline':'pipeline','#/cases':'cases','#/mine':'mine','#/new':'new'}[h];
