@@ -2,7 +2,7 @@
 {
  "id": "handoff",
  "name": "Hand off to the lab",
- "version": "1.0",
+ "version": "1.1",
  "phases": [
   "robot"
  ],
@@ -16,7 +16,7 @@
  "outputs": [
   {
    "name": "protocol package",
-   "what": "steps, stocks, plate or vessel format, measurements, expected values with bands, acceptance checks"
+   "what": "what to make, the conditions (chosen and fixed, with units), materials with amounts and roles, equipment and tools, measurements with their instruments, targets and predicted bands, steps, acceptance checks"
   },
   {
    "name": "feedback",
@@ -27,7 +27,7 @@
   {
    "id": "package",
    "name": "Assemble the package",
-   "does": "steps, stocks, format, measurements, expected bands, acceptance checks",
+   "does": "conditions, materials, equipment and tools, measurements with predicted bands, steps, acceptance checks; the agent lists materials and equipment if the recipe did not",
    "gate": "a person approved the recipe first"
   },
   {
@@ -45,7 +45,7 @@
   {
    "id": "return",
    "name": "Take the results back",
-   "does": "measurements and run logs; compare with the predicted band",
+   "does": "the researcher enters each run's measurements; every run is kept and compared with the predicted band",
    "gate": "inside/outside the band recorded"
   },
   {

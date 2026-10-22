@@ -10,6 +10,24 @@ import pytest
 from synthtwin.core import catalog, engine
 
 
+def _download(agent: engine.Agent, sid: str) -> dict:
+    """GET /api/agent/<sid>/package from a live server on the same data."""
+    import threading
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+
+    from synthtwin.ui.server import App, make_handler
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(App(agent.cfg)))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{srv.server_address[1]}/api/agent/{sid}/package",
+                                    timeout=10) as r:
+            assert "attachment" in r.headers["Content-Disposition"]
+            return json.loads(r.read())
+    finally:
+        srv.shutdown()
+
+
 def test_full_flow(agent: engine.Agent, settle, prompts: list[str]) -> None:
     sid = agent.create("I need ~15 nm citrate gold for a DLS standard")["id"]
     s = settle(agent, sid)
@@ -67,11 +85,25 @@ def test_full_flow(agent: engine.Agent, settle, prompts: list[str]) -> None:
     agent.confirm(sid, {})
     s = settle(agent, sid)
     assert s["phase"] == "robot"
-    req = list((agent.cfg.data_dir / "robot_requests").glob("*.json"))
+    rr = agent.cfg.data_dir / "robot_requests"
+    req = [f for f in rr.glob("*.json") if not f.name.endswith(".package.json")]
     assert len(req) == 1 and "self-building lab" in json.loads(req[0].read_text())["handoff"]
+    # the protocol package for the self-building lab sits next to the request
+    pk = json.loads((rr / req[0].name.replace(".json", ".package.json")).read_text())
+    assert pk == s["phases"]["robot"]["package"]
+    # the recipe listed no materials/equipment, so the agent filled them in and the package was rebuilt
+    assert pk["materials"][0]["name"] == "HAuCl4" and pk["equipment"] == ["heated stirred vial block"]
+    assert pk["materials_source"] == "recipe" and s["phases"]["recipe"]["recipe"]["materials"]
+    assert _download(agent, sid) == pk
+    assert pk["conditions"] and pk["measurements"] and pk["steps"] is not None
+    assert {c["name"] for c in pk["conditions"]} == set(s["phases"]["robot"]["request"]["proposal"]["conditions"])
 
-    agent.result(sid, {"measured": {"size_mean_nm": 15.2}})
+    agent.result(sid, {"measured": {"size_mean_nm": 15.2}, "notes": "first plate"})
+    agent.result(sid, {"measured": {"size_mean_nm": 14.8}})
     s = agent.load(sid)
-    assert s["status"] == "complete" and s["phases"]["robot"]["results"][0]["quantity"] == "size_mean_nm"
+    rb = s["phases"]["robot"]
+    assert s["status"] == "complete" and rb["results"][0]["quantity"] == "size_mean_nm"
+    assert [r["n"] for r in rb["runs"]] == [1, 2] and rb["runs"][0]["notes"] == "first plate"
+    assert rb["results"][0]["measured"] == 14.8
     fb = (agent.cfg.data_dir / "feedback.jsonl").read_text().splitlines()
     assert json.loads(fb[-1])["source"] == "robot"

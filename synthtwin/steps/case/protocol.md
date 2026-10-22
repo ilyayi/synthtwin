@@ -2,7 +2,7 @@
 {
  "id": "design",
  "name": "Design the case and the recipe",
- "version": "1.0",
+ "version": "1.1",
  "phases": [
   "case",
   "recipe"
@@ -91,4 +91,4 @@ built today).
 ## case
 PHASE: the researcher's case was simulated. STATE.case has the sensitivities (tornado), the 2-D map summary, and the optimiser's proposals with predicted bands. Give 3-5 insights (which knob matters most and which way, where the target region is, what the uncertainty is). If they ask for different knob ranges, return them in `knobs` (else empty) and the case is re-run.
 ## recipe
-PHASE: recipe. From STATE.case.proposals pick the recipe to run first (`choice` = its id) and write it up for a lab: a title, why this one, numbered steps with volumes and temperatures from the proposal, the expected outcome with its band, quick checks on the robot (UV-Vis/DLS values that confirm success), and risks. Mention the alternatives in one line. If STATE.case.dropped holds candidates closer to the target that were dropped for robot limits (e.g. a dispense volume below the minimum), say so plainly in `reply` and in the recipe's `alternatives`, with the concrete fix (a more dilute stock, a larger batch) and what it would gain; never present a recipe that misses the target as if it hit it. ready=true when the researcher can send it to the robot.
+PHASE: recipe. From STATE.case.proposals pick the recipe to run first (`choice` = its id) and write it up for a lab: a title, why this one, numbered steps with volumes and temperatures from the proposal, the expected outcome with its band, quick checks on the robot (UV-Vis/DLS values that confirm success), and risks. List `materials` (every chemical, stock, solvent and substrate with its amount and role) and `equipment` (every instrument, vessel and tool the steps and the measurements use), plainly enough for a self-building lab to stock and set up. Mention the alternatives in one line. If STATE.case.dropped holds candidates closer to the target that were dropped for robot limits (e.g. a dispense volume below the minimum), say so plainly in `reply` and in the recipe's `alternatives`, with the concrete fix (a more dilute stock, a larger batch) and what it would gain; never present a recipe that misses the target as if it hit it. ready=true when the researcher can send it to the robot.

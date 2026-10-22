@@ -7,6 +7,8 @@ import json
 import time
 from typing import Callable
 
+from synthtwin import steps
+
 
 def apply(agent, s: dict, ans: dict) -> Callable | None:
     """Record the recipe; the choice must be one of the optimiser's proposals."""
@@ -44,12 +46,19 @@ def confirm(agent, sid: str, s: dict, body: dict) -> None:
     out.mkdir(exist_ok=True)
     (out / f"{pid}.json").write_text(json.dumps(req, indent=1, default=str))
 
+    robot = steps.run("robot")
+    pack = robot.package(agent, s, req)
+
     def go(s):
         agent._advance(s, "robot")
-        s["phases"]["robot"].update(request=req, status="awaiting_user")
+        s["phases"]["robot"].update(request=req, package=pack, status="awaiting_user")
         s["status"] = "awaiting_user"
         s["chat"].append({"role": "agent", "phase": "robot", "at": time.time(),
-                          "text": f"Request {pid} is written for the robot ({req['label']}). Hand it to the platform "
-                                  "team; when the measurements are back, enter them below and I will compare them "
+                          "text": f"Request {pid} is written for the robot ({req['label']}), with its protocol "
+                                  "package (conditions, materials, equipment, measurements). Hand it to the lab; "
+                                  "when the measurements are back, enter them below and I will compare them "
                                   "with the prediction."})
     agent.mutate(sid, go)
+    rc = req["recipe"] or {}
+    if rc and not (rc.get("materials") and rc.get("equipment")) and agent.cfg.llm:
+        agent.background(sid, "listing materials and equipment", lambda: robot.fill(agent, sid))

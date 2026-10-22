@@ -1,0 +1,51 @@
+/* the robot step's panel styles: the protocol package and the feedback window */
+.rb-grid{display:flex;flex-direction:column;gap:12px}
+.rb-fb{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px!important;align-items:start}
+.rb-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.rb-eyebrow{margin:0 0 4px!important;font:600 10.5px/1.4 var(--mono)!important;letter-spacing:.1em;text-transform:uppercase;color:var(--cy)!important;display:flex;gap:8px;align-items:center}
+.rb-meth{font-size:13px}
+.rb-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.rb-sec{border-top:1px solid var(--line);padding-top:10px;min-width:0}
+.rb-sec h5{margin:0 0 8px;font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:inline-flex;gap:8px;align-items:center}
+.rb-n{font:600 10.5px/1 var(--mono);color:var(--cu2);background:rgba(216,137,79,.12);padding:3px 6px;border-radius:6px;letter-spacing:0}
+.rb-src{font:400 11px/1 var(--sans);text-transform:none;letter-spacing:0;color:var(--warn)}
+.rb-tab{width:100%;border-collapse:collapse;font-size:13px}
+.rb-tab th{text-align:left;font:600 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);padding:6px 6px;border-bottom:1px solid var(--line2)}
+.rb-tab td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink2)}
+.rb-tab tr.varied td:first-child{color:var(--ink);font-weight:600}
+.rb-tab .v{font:500 12.5px/1.4 var(--mono);color:var(--ink);white-space:nowrap}
+.rb-tab .ins{font-size:12.5px}
+.robot .u{font:400 11.5px/1 var(--mono);color:var(--ink3)}
+.rb-k{font:600 10px/1 var(--mono);padding:3px 6px;border-radius:6px;color:var(--ink3);box-shadow:inset 0 0 0 1px var(--line2)}
+.rb-k.varied{color:var(--cu2);box-shadow:inset 0 0 0 1px rgba(216,137,79,.45)}
+.rb-list{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink2)}
+.rb-list b{color:var(--ink);font-weight:600}
+.rb-list .v{font-size:12.5px;color:var(--cy)}
+.rb-role{font-size:12px;color:var(--ink3)}
+.rb-role::before{content:"· "}
+.rb-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rb-chip{font-size:12.5px;padding:5px 9px;border-radius:8px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink)}
+.rb-chip.meas{color:var(--cy);box-shadow:inset 0 0 0 1px rgba(98,198,242,.35)}
+.rb-acc{margin-top:8px;font-size:13px;color:var(--ink2)}
+.rb-acc summary,.rb-steps summary{cursor:pointer;color:var(--ink2)}
+.rb-acc ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.rb-steps summary{list-style:none;display:flex;align-items:center;gap:6px}
+.rb-steps summary::before{content:"▸";color:var(--ink3);font-size:11px;margin-bottom:8px}
+.rb-steps[open] summary::before{content:"▾"}
+.rb-steps ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink2)}
+.rb-wait{align-self:stretch;display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--cy-dim);box-shadow:inset 0 0 0 1px rgba(98,198,242,.3)}
+.rb-wait h4{color:var(--cy)}
+.rb-wait p{font-size:13px;margin-top:4px!important}
+.rb-dot{flex:none;width:10px;height:10px;margin-top:5px;border-radius:50%;background:var(--cy);animation:rbpulse 1.6s ease-in-out infinite}
+@keyframes rbpulse{0%,100%{box-shadow:0 0 0 0 rgba(98,198,242,.55)}50%{box-shadow:0 0 0 7px rgba(98,198,242,0)}}
+.rb-form{display:flex;flex-direction:column;gap:9px}
+.rb-in{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink)}
+.rb-in em{display:block;font:400 11.5px/1.3 var(--mono);font-style:normal;color:var(--ink3)}
+.rb-in input,.rb-in textarea{width:100%}
+.rb-in textarea{min-height:52px;resize:vertical;font-size:13px}
+.rb-form .btn{align-self:flex-start}
+.rb-run{padding:10px 0;border-bottom:1px solid var(--line)}
+.rb-rh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px!important;font-size:13px}
+.rb-rh span:not(.pill){font:400 11.5px/1 var(--mono);color:var(--ink3)}
+.rb-notes{font-size:12.5px;margin-top:6px!important;color:var(--ink2);font-style:italic}
+.rb-again{margin:6px 0 0;font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}

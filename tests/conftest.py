@@ -107,8 +107,11 @@ def scripted(system: str, prompt: str, schema: dict) -> dict:
             {"id": "atomistic", "title": "Atoms", "summary": "the atoms",
              "processes": [{"name": "Coalescence", "what": "small particles merge", "icon": "collide"}]},
             {"id": "galactic", "title": "not a scale", "processes": [{"name": "x", "what": "y"}]}]
-    if "recipe" in props:
+    if "recipe" in props:   # no materials/equipment: the robot step's fill lists them
         ans["recipe"] = {"title": "R", "why": "w", "steps": ["a"], "expected": "15 nm", "checks": ["c"], "risks": ["r"]}
+    elif "materials" in props:
+        ans.update(materials=[{"name": "HAuCl4", "amount": "25 mM stock", "role": "precursor"}],
+                   equipment=["heated stirred vial block"])
     return ans
 
 

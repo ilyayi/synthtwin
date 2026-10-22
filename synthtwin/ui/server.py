@@ -407,6 +407,17 @@ def make_handler(app: App):
                 m = re.match(r"^/api/studies/([^/]+)$", path)
                 if m:
                     return self._json(app.get(m.group(1)))
+                m = re.match(r"^/api/agent/([^/]+)/package$", path)
+                if m and app.agent:
+                    pk = app.agent.load(m.group(1))["phases"]["robot"].get("package")
+                    if pk:
+                        self.send_response(200)
+                        body = json.dumps(pk, indent=1, ensure_ascii=False).encode()
+                        self.send_header("Content-Type", "application/json; charset=utf-8")
+                        self.send_header("Content-Disposition", f'attachment; filename="{pk["request"]}.package.json"')
+                        self.send_header("Content-Length", str(len(body)))
+                        self.end_headers()
+                        return self.wfile.write(body)
             except (KeyError, FileNotFoundError):
                 pass
             self._json({"error": "not found"}, 404)

@@ -121,5 +121,5 @@ function bindPanel(s,ph){
   document.querySelectorAll('[data-vtab]').forEach(b=>b.onclick=e=>{e.stopPropagation();const[k,j]=b.dataset.vtab.split(':');AG.vtab[k]=+j;render(AG.s)});
   document.querySelectorAll('[data-viz]').forEach(b=>b.onclick=()=>{const[k]=b.dataset.viz.split(':');lightbox(AG.s,s.phases[ph]||{},k)});
   const rb=$('#agres');rb&&(rb.onclick=async()=>{const m={};document.querySelectorAll('[data-mq]').forEach(i=>{if(i.value!=='')m[i.dataset.mq]=+i.value});
-    try{await post(`/api/agent/${s.id}/result`,{measured:m});refresh()}catch(e){toast(e.message)}})}
+    const nt=$('#agnotes');try{await post(`/api/agent/${s.id}/result`,{measured:m,notes:nt?nt.value:''});refresh()}catch(e){toast(e.message)}})}
 const wait=t=>`<div class="apanel"><p class="help" style="display:flex;gap:8px;align-items:center;margin:0"><span class="spin"></span>${esc(t)}</p></div>`;
