@@ -48,7 +48,7 @@ function bxCard(json,ds){
    <p class="cs">best-so-far ${esc(d.objective)} vs experiments run (${dir}); mean over ${json.meta.setup.seeds} seeds, band: 5-95 % on 60/40 · pool: ${d.n_pool} measured conditions from ${d.n_raw} rows · ${esc(json.meta.cite.split(',')[0])} et al. 2021, MIT</p>
    <div class="ctabs" style="margin:8px 0">${tabs}</div>
    ${lineChart({w:760,h:280,xlab:'experiments',ylab:d.objective,series})}
-   ${legend(series)}   /* legend reads color+label only */
+   ${legend(series)}
    <div class="bx-stats">${stats}</div>
    <p class="cs" style="margin:0">${bxVerdict(ds,d)}</p>`;
 }
@@ -66,9 +66,10 @@ function bxVerdict(ds,d){
 }
 
 STEP_BINDS.case=(s,P)=>{const box=document.querySelector('[data-bx]');if(!box)return;
-  box.onclick=e=>{const b=e.target.closest('[data-bxd]');if(b){BX.ds=b.dataset.bxd;box.querySelector('[data-bxin]').innerHTML=bxCard(BX.data,BX.ds)}};
+  box.onclick=e=>{const b=e.target.closest('[data-bxd]');if(b&&BX.data){BX.ds=b.dataset.bxd;box.querySelector('[data-bxin]').innerHTML=bxCard(BX.data,BX.ds)}};
+  if(BX.data&&box.querySelector('[data-bxin] .cs'))box.querySelector('[data-bxin]').innerHTML=bxCard(BX.data,BX.ds);   // the page re-rendered while the fetch ran
   if(!BX.promise)BX.promise=fetch('/api/bench6040').then(r=>r.json()).then(j=>{BX.data=j;
-    const inn=box.querySelector('[data-bxin]');if(inn)inn.innerHTML=bxCard(j,BX.ds)})
+    const inn=document.querySelector('[data-bx] [data-bxin]');if(inn)inn.innerHTML=bxCard(j,BX.ds)})
     .catch(()=>{BX.data={error:'benchmark data unavailable'};   // show it, never stay on 'loading'
-      const inn=box.querySelector('[data-bxin]');if(inn)inn.innerHTML=bxCard(BX.data,BX.ds)});
+      const inn=document.querySelector('[data-bx] [data-bxin]');if(inn)inn.innerHTML=bxCard(BX.data,BX.ds)});
 };
