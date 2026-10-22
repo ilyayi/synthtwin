@@ -45,13 +45,22 @@ function bxCard(json,ds){
     ['EF vs random',`${(+mine.ef_top1).toFixed(1)}×`],['hits the literature optimum',`${Math.round(mine.hit_rate*100)} %`]]
     .map(([k,v])=>`<span class="bx-stat"><b>${esc(v)}</b> ${esc(k)}</span>`).join('');
   return `<p class="ct">Why 60/40 · ${esc(ds)}</p>
-   <p class="cs">best-so-far ${esc(d.objective)} vs experiments run (${dir}); mean over ${json.meta.setup.seeds} seeds, band: 5-95 % on 60/40 · pool: ${d.n_pool} measured conditions from ${d.n_raw} rows · ${esc(json.meta.cite.split(',')[0])} et al. 2021, MIT</p>
+   <p class="cs">A real lab campaign replayed: each experiment returns the result the lab measured for that condition, so no simulation is involved. It tests the choice rule, not the simulator.</p>
+   <p class="cs">best-so-far ${esc(d.objective)} vs experiments run (${dir}); mean over ${json.meta.setup.seeds} seeds, band: 5-95 % on 60/40 · pool: ${d.n_pool} measured conditions from ${d.n_raw} rows · ${esc(json.meta.cite.split(',')[0])} 2021 (data MIT)</p>
    <div class="ctabs" style="margin:8px 0">${tabs}</div>
-   ${lineChart({w:760,h:280,xlab:'experiments',ylab:d.objective,series})}
+   <div class="bx-chart">${lineChart({w:760,h:280,xlab:'experiments',ylab:d.objective,series:series.slice().reverse()})}</div>
    ${legend(series)}
    <div class="bx-stats">${stats}</div>
-   <p class="cs" style="margin:0">${bxVerdict(ds,d)}</p>`;
+   <p class="cs" style="margin:0">${bxVerdict(ds,d)}</p>
+   ${bxTable(json,ds)}`;
 }
+
+/* every campaign at once: median experiments to the top 1 %, the fastest per row marked */
+function bxTable(json,ds){const names=['60/40','random','exploit','80/20','40/60','explore','EI','LCB'].filter(n=>Object.values(json.datasets).every(d=>d.curves[n]));
+  const rows=Object.entries(json.datasets).map(([k,d])=>{const best=Math.min(...names.map(n=>d.curves[n].n_top1));
+    return `<tr class="${k===ds?'on':''}"><td>${esc(k)}</td>${names.map(n=>`<td class="${d.curves[n].n_top1===best?'best':''} ${n==='60/40'?'me':''}">${bxN(d.curves[n].n_top1,d.budget)}</td>`).join('')}</tr>`}).join('');
+  return `<table class="bx-tab"><tr><th>campaign</th>${names.map(n=>`<th class="${n==='60/40'?'me':''}">${esc(n)}</th>`).join('')}</tr>${rows}</table>
+   <p class="cs" style="margin:4px 0 0">median experiments to reach the top 1 % of each measured pool (30 seeds); bold: fastest on that campaign · 80/20 and 40/60 are the same rule with other splits; EI and LCB are standard Bayesian-optimisation rules</p>`}
 
 function bxVerdict(ds,d){
   const c=d.curves,mine=c['60/40'],rnd=c.random;
@@ -61,9 +70,18 @@ function bxVerdict(ds,d){
   const censored=mine.n_top1>d.budget;
   const head=`On ${ds}, 60/40 reaches the top 1 % of the pool in a median of ${bxN(mine.n_top1,d.budget)} of ${d.budget} experiments (random: ${bxN(rnd.n_top1,d.budget)}, enhancement ${(+mine.ef_top1).toFixed(1)}×)`;
   if(censored)return `${head}, but neither it nor random got there within budget on half the seeds.`;
-  const tail=faster.length?`; here ${faster.join(' and ')} ${faster.length>1?'are':'is'} faster at ${best}.`:` — as fast as the best strategy tried.`;
+  const tail=faster.length?`; faster here: ${faster.sort((a,b)=>c[a].n_top1-c[b].n_top1).map(k=>`${k} (${bxN(c[k].n_top1,d.budget)})`).join(', ')}.`:` — as fast as the best strategy tried.`;
   return `${head}${tail}`;
 }
+
+/* the 60/40 test as its own page (#/optimizer): the same card, full width */
+BX.page=async function(){
+  $('#app').innerHTML=`<div class="wrap bx-page"><div class="shead"><a class="back" href="#/">← All studies</a>
+    <p class="eyebrow" style="margin-top:18px">SynthTwin · optimiser test</p><h2>Is 60/40 a good rule?</h2>
+    <p class="lede" style="max-width:74ch">Each round SynthTwin proposes a few experiments: about 60 % where the model predicts the best result (<b>exploit</b>), 40 % where it is least sure (<b>explore</b>). To check that rule, we replay five published lab campaigns (Liang et al. 2021): the rule picks a condition, the lab's measured result for it is revealed, repeat. No simulation is involved, so this tests the choice rule only, against the real optimum each lab found.</p></div>
+    <section style="padding-top:4px"><div class="bx-card" data-bx><div data-bxin>${BX.data?bxCard(BX.data,BX.ds):'<p class="cs">loading the 60/40 benchmark…</p>'}</div></div></section></div>`;
+  STEP_BINDS.case({},{});
+};
 
 STEP_BINDS.case=(s,P)=>{const box=document.querySelector('[data-bx]');if(!box)return;
   box.onclick=e=>{const b=e.target.closest('[data-bxd]');if(b&&BX.data){BX.ds=b.dataset.bxd;box.querySelector('[data-bxin]').innerHTML=bxCard(BX.data,BX.ds)}};

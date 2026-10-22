@@ -7,3 +7,15 @@
 .bx-stats{display:flex;flex-wrap:wrap;gap:8px 22px;margin:10px 0 8px}
 .bx-stat b{font-family:var(--mono);font-size:15px;margin-right:6px;color:var(--ink)}
 .bx-stat{color:var(--ink2);font-size:12px}
+.bx-tab{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
+.bx-tab th{text-align:right;font:600 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);padding:6px;border-bottom:1px solid var(--line2)}
+.bx-tab td{text-align:right;padding:6px;border-bottom:1px solid var(--line);font-family:var(--mono);color:var(--ink2)}
+.bx-tab th:first-child,.bx-tab td:first-child{text-align:left;font-family:var(--sans);color:var(--ink)}
+.bx-tab .me{background:rgba(192,106,53,.10)}
+.bx-tab td.best{color:var(--ink);font-weight:700}
+.bx-tab tr.on td:first-child{color:var(--cu2);font-weight:600}
+.bx-page .bx-card{margin-top:0}
+.bx-page .bx-tab,.bx-card .bx-tab{display:table}
+@media (max-width:700px){.bx-tab{display:block;overflow-x:auto}}
+.bx-chart{max-width:860px}
+.bx-chart svg{width:100%;height:auto}
