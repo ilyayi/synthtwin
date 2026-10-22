@@ -3,7 +3,7 @@
    fmt, icon, the charts) come from common.js; each step's panel lives in its
    step folder, served concatenated as /static/steps.js, and registers itself
    into STEP_PANELS. */
-const AG={meta:null,sid:null,view:null,s:null,poll:null,qtab:null,ktab:null,ctab:null,viz:null,vtab:{},vkey:null};
+const AG={meta:null,sid:null,view:null,s:null,poll:null,qtab:null,ktab:null,ctab:null,viz:null,vtab:{},vkey:null,models:undefined};
 const GATE={goal:['Confirm the goal','Then I look for related studies (benchmark cases, library, literature).'],
   prior:['Choose simulations','Next: which methods to run, with time and the insight each gives.'],
   stack:['Use this stack','Next: pick related studies to benchmark it on.'],
@@ -42,10 +42,11 @@ function agentCard(s){const ph=AG.meta?.steps||[];const cur=ph.findIndex(p=>p.id
 /* ---------------------------------------------------------------- study page */
 async function agentStudy(id,s){await agentMeta();
   if(AG.viz===null)api('/api/viz').then(v=>{AG.viz=v;if(AG.s&&AG.s.id===id)render(AG.s)}).catch(()=>{AG.viz={enabled:false,items:[]}});
+  if(AG.models===undefined)api('/api/models').then(m=>{AG.models=m;if(AG.s)render(AG.s)}).catch(()=>{AG.models=null});
   if(AG.sid!==id||!$('#agmain')){AG.sid=id;AG.view=null;
     $('#app').innerHTML=`<div class="wrap"><div class="shead" style="padding-bottom:4px"><a class="back" href="#/">← All studies</a></div>
      <div class="ag"><div class="ag-main" id="agmain"></div>
-     <aside class="chat"><div class="ch"><span class="orb"></span><b>SynthTwin agent</b><span class="meta" id="agllm" style="margin-left:auto"></span></div>
+     <aside class="chat"><div class="ch"><span class="orb"></span><b>SynthTwin agent</b><span class="meta" id="agllm" style="margin-left:auto;display:flex;gap:8px;align-items:center"></span></div>
       <div class="log" id="aglog"></div><div class="gate" id="aggate"></div>
       <form id="agform"><textarea id="agin" placeholder="Reply, ask, or tell it what to change…"></textarea><button class="btn cu" type="submit">Send</button></form></aside></div></div>`;
     $('#agform').onsubmit=async e=>{e.preventDefault();const t=$('#agin').value.trim();if(!t)return;
@@ -58,6 +59,19 @@ function toast(m){const g=$('#aggate');if(g)g.insertAdjacentHTML('afterbegin',`<
 
 /* light markdown for chat: bold, inline code, bullets (the bubble keeps line breaks) */
 function chatMd(t){return esc(t).replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/^(\s*)[-*] /gm,'$1• ')}
+/* model mix (md-): the preset switch in the chat header, and the per-turn backend tag.
+   /api/models serves the backends (availability + reason), the current plan/work and
+   the presets; POST switches them without a restart. */
+function mdTag(m){return m&&m.meta&&m.meta.llm?`<span class="mdtag" title="${esc([m.meta.model,m.meta.role].filter(Boolean).join(' · '))}">${esc(m.meta.llm)}</span>`:''}
+function mdSwitch(){const m=AG.models;if(!m||!m.enabled)return '';
+  const be=n=>m.backends.find(b=>b.name===n)||{};
+  const cur=m.presets.findIndex(p=>p.plan===m.plan&&p.work===m.work);
+  return `<select class="mdsel" id="mdsel" title="which models answer this study: ${esc(m.plan)} plans · ${esc(m.work)} executes">
+   ${cur<0?`<option selected>${esc(m.plan)} / ${esc(m.work)}</option>`:''}
+   ${m.presets.map((p,i)=>{const off=[p.plan,p.work].some(n=>!be(n).available);
+     const why=[p.plan,p.work].filter(n=>!be(n).available).map(n=>`${n}: ${be(n).reason||'unavailable'}`).join('; ');
+     return `<option value="${i}"${i===cur?' selected':''}${off?' disabled':''} title="${esc(why)}">${esc(p.name)}${off?' (off)':''}</option>`}).join('')}
+  </select>`}
 function render(s){const prev=AG.s;AG.s=s;
   const ph=AG.meta.steps,cur=s.phase,ci=ph.findIndex(p=>p.id===cur);
   const view=AG.view&&ph.findIndex(p=>p.id===AG.view)<=ci?AG.view:cur;
@@ -66,11 +80,14 @@ function render(s){const prev=AG.s;AG.s=s;
   let lastPh=null;const rows=[];
   for(const m of s.chat){const r=rows[rows.length-1];if(r&&r.m.role===m.role&&r.m.phase===m.phase&&r.m.text===m.text)r.n++;else rows.push({m,n:1})}
   log.innerHTML=rows.map(({m,n})=>{let d='';if(m.phase!==lastPh){lastPh=m.phase;d=`<div class="pdiv">${esc((ph.find(p=>p.id===m.phase)||{}).name||m.phase)}</div>`}
-    return d+`<div class="msg ${m.role}">${chatMd(m.text)}${n>1?`<span class="rep">×${n}</span>`:''}</div>`}).join('')
+    return d+`<div class="msg ${m.role}">${chatMd(m.text)}${mdTag(m)}${n>1?`<span class="rep">×${n}</span>`:''}</div>`}).join('')
     +(s.busy?`<div class="typing"><span class="spin"></span>${esc(s.busy)}…</div>`:'');
   if(atBottom||!prev||prev.chat.length!==s.chat.length||!!prev.busy!==!!s.busy)log.scrollTop=log.scrollHeight;
   const last=[...s.chat].reverse().find(m=>m.meta&&m.meta.cost_usd!=null);
-  $('#agllm').textContent=last?`${(last.meta.ms/1000).toFixed(0)} s / turn`:'';
+  $('#agllm').innerHTML=`<span class="mdtime">${last?`${(last.meta.ms/1000).toFixed(0)} s / turn`:''}</span>${mdSwitch()}`;
+  const ms=$('#mdsel');ms&&(ms.onchange=async()=>{const p=(AG.models||{}).presets||[];const pr=p[+ms.value];if(!pr)return;
+    try{AG.models=await post('/api/models',{plan:pr.plan,work:pr.work})}catch(e){toast(e.message)}
+    render(AG.s)});
   // gate
   const g=GATE[cur];const P=s.phases[cur];
   $('#aggate').innerHTML=s.error?`<p class="err" style="margin:0 0 8px">${esc(s.error)}</p><button class="btn ghost" type="button" id="agretry">Retry this step</button>`

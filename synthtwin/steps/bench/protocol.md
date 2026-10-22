@@ -2,7 +2,7 @@
 {
  "id": "build-and-qa",
  "name": "Build and QA the simulator",
- "version": "1.0",
+ "version": "1.1",
  "phases": [
   "bench"
  ],
@@ -79,6 +79,7 @@
   "toolbox"
  ],
  "prompts": {
+  "builder.assemble": "assemble",
   "builder.brief": "brief",
   "builder.resume": "resume",
   "builder.review": "review",
@@ -88,10 +89,10 @@
 }
 ```
 
-A4.8-A4.9 of the pipeline. The five prompt sections are the builder's assignment, its
-resume note, the QA reviewer's brief, and the two time-budget rules ({goal}, {stack}, {chain},
-{tools}, {train}, {held}, {knobs}, {budget}, {time_rule}, {install_rule}, {reason}, {previous}
-substituted by builder.build).
+A4.8-A4.9 of the pipeline. The six prompt sections are the builder's assignment, its
+resume note, the QA reviewer's brief, the two time-budget rules and the mixed-team
+assembly note ({goal}, {stack}, {chain}, {tools}, {train}, {held}, {knobs}, {budget},
+{time_rule}, {install_rule}, {reason}, {previous}, {delegate} substituted by builder.build).
 
 ## brief
 You are the simulation engineer of SynthTwin, a research agent that plans syntheses for a robotic lab.
@@ -168,6 +169,15 @@ Continue the work under the same deliverables and rules. Before you end a turn w
 GPU BRIEF.md allows (here and on any shared server) is busy with useful work for this study (more state points,
 seeds or temperatures, longer runs for better statistics) and queue more if one is idle. When everything is done, `python check_model.py`
 prints OK and report.json is current, finish with a 3-sentence summary.
+## assemble
+The build was split into subtasks and lighter models ran them for you, each in its own numbered folder
+(hold nothing else: their folders hold the methods' scripts, runs and results, and their own notes).
+Read what they produced, check it against BRIEF.md, then do the whole job's remaining work yourself:
+assemble model.py and report.json exactly as BRIEF.md asks (a subtask's numbers go in through files you
+read, not by trusting its summary), run `python check_model.py` until it prints OK, and fill in anything
+a subtask left missing, marking in report.json what you had to do yourself. The subtasks:
+
+{delegate}
 ## review
 You are the simulation QA reviewer of SynthTwin: a sceptical computational scientist auditing the
 simulations another agent ran in THIS folder before a researcher trusts them to choose a recipe. BRIEF.md is the

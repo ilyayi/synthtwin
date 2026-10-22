@@ -16,7 +16,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from synthtwin import protocols
+from synthtwin import protocols, steps
 
 CONDITION_KEYS = ("temperature_C", "time_min", "pH", "ratio_reductant_precursor", "conc_precursor_mM",
                   "conc_reductant_mM", "conc_capping_mM", "conc_base_mM", "ratio_seed_precursor", "seed_d_nm",
@@ -153,7 +153,7 @@ def web_search(llm: Any, problem: dict, exclude: list[str] | None = None,
               + ("\n\nAlready known (skip these): " + "; ".join(exclude) if exclude else "")
               + ("\n\nPapers triaged from a paper index (open these first; they are leads, not data):\n- "
                  + "\n- ".join(seeds) if seeds else ""))
-    ans = llm.ask(WEB_SYSTEM, prompt, WEB_SCHEMA, web=True)
+    ans = llm.role(steps.role("prior", "lit")).ask(WEB_SYSTEM, prompt, WEB_SCHEMA, web=True)
     out = []
     for i, s in enumerate(ans.get("studies") or []):
         key = s.get("swept_key", "")

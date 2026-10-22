@@ -24,6 +24,11 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
+# which team role ("plan" = frontier, "work" = light) makes each kind of LLM call;
+# a step's step.json "models" overrides its kinds (steps without one get these)
+MODEL_ROLES = {"turn": "plan", "build": "work", "review": "plan", "lit": "work",
+               "triage": "work", "materials": "work", "refine": "work"}
+
 
 def _load() -> list[dict]:
     steps = []
@@ -34,6 +39,11 @@ def _load() -> list[dict]:
         s = json.loads(f.read_text())
         if s.get("id") != d.name:
             raise ValueError(f"{f}: declares id {s.get('id')!r}, expected {d.name!r}")
+        for kind, role in (s.get("models") or {}).items():
+            if kind not in MODEL_ROLES:
+                raise ValueError(f"{f}: models kind {kind!r} is not one of {sorted(MODEL_ROLES)}")
+            if role not in ("plan", "work"):
+                raise ValueError(f"{f}: models.{kind} must be 'plan' or 'work', not {role!r}")
         steps.append(s)
     steps.sort(key=lambda s: s["order"])
     if [s["order"] for s in steps] != list(range(1, len(steps) + 1)):
@@ -54,6 +64,15 @@ def get(sid: str) -> dict:
         return BY_ID[sid]
     except KeyError:
         raise ValueError(f"no step {sid!r} (have: {', '.join(ORDER)})") from None
+
+
+def role(sid: str, kind: str) -> str:
+    """Which team role ("plan" | "work") makes this kind of LLM call in this step
+    (the step.json "models" map, else the MODEL_ROLES default for the kind)."""
+    r = get(sid).get("models", {}).get(kind)
+    if r not in (None, "plan", "work"):
+        raise ValueError(f"step {sid!r}: models.{kind} must be 'plan' or 'work', not {r!r}")
+    return r or MODEL_ROLES[kind]
 
 
 def folder(sid: str) -> Path:

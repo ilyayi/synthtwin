@@ -36,8 +36,9 @@ from typing import Any, Callable
 import yaml
 
 from synthtwin.core.toolbox import tools_text
+from synthtwin.core.team import Team, delegate
 
-from synthtwin import protocols
+from synthtwin import protocols, steps
 
 CHECK = r'''"""Contract check for model.py (run by the builder and by the platform)."""
 import json, math, sys
@@ -129,6 +130,7 @@ TIME_LIMITED = protocols.prompt("builder.time_limited")
 NO_LIMIT = protocols.prompt("builder.no_limit")
 RESUME = protocols.prompt("builder.resume")
 REVIEW = protocols.prompt("builder.review")
+ASSEMBLE = protocols.prompt("builder.assemble")   # mixed teams: the workers' folders, for the assembler
 
 QA_SCHEMA = {
     "type": "object",
@@ -272,13 +274,23 @@ def chain_text(chain: list[dict] | None) -> str:
     return "\n".join(out) + "\n"
 
 
+def _delegate_text(d: dict) -> str:
+    """The subtasks' folders and outcomes, for the assembly note."""
+    return "\n".join(f"- {t['dir']}/ — {t['title']}: acceptance check "
+                     f"{'passed' if t['check']['ok'] else 'FAILED'} after {t['rounds']} round(s) "
+                     f"(model {t.get('model', '?')}). Worker's summary: {t['text'][:300]}"
+                     for t in d.get("subtasks", [])) or "(no subtasks came back)"
+
+
 def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: list[dict], held: set[str],
           tools_path: Path | None, budget_min: int = 0, qa_rounds: int = 3,
           progress: Callable[[dict], None] | None = None, poll: float = 60, toolbox: Path | None = None,
           chain: list[dict] | None = None) -> dict:
     """Run the builder (and its jobs) until model.py passes, then the QA review loop.
 
-    budget_min=0 means no time limit. progress() gets {stage, round, jobs, sessions, qa} as work goes on."""
+    budget_min=0 means no time limit. progress() gets {stage, round, jobs, sessions, qa,
+    delegate?} as work goes on. A mixed team (plan != work) first delegates the methods
+    to worker subtasks, then one assembly session builds model.py from them."""
     workdir.mkdir(parents=True, exist_ok=True)
     train, hold, anchors = _studies(studies, held, list(problem["targets"]))
     spec = {"material": problem.get("material", ""), "method": problem.get("method", ""),
@@ -306,21 +318,28 @@ def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: li
     deadline = t0 + budget_min * 60 if budget_min else None
     log: dict[str, Any] = {"sessions": [], "qa": [], "stage": "building", "round": 0}
     cost = [0.0]
+    # the bench step.json "models" routing: work builds, the plan model reviews QA
+    worker = llm.role(steps.role("bench", "build"))
+    reviewer = llm.role(steps.role("bench", "review"))
+    # a mixed team (frontier plans, light executes) splits the build into per-method subtasks
+    mixed = isinstance(llm, Team) and llm.mixed and not resuming
 
     def tell(**kw):
         log.update(kw)
         if progress:
             progress({"stage": log["stage"], "round": log["round"], "jobs": jobs(workdir),
-                      "sessions": log["sessions"][-8:], "qa": log["qa"], "minutes": round((time.time() - t0) / 60, 1)})
+                      "sessions": log["sessions"][-8:], "qa": log["qa"], "minutes": round((time.time() - t0) / 60, 1),
+                      **({"delegate": log["delegate"]} if log.get("delegate") else {})})
 
     def left() -> int | None:
         return None if deadline is None else max(60, int(deadline - time.time()) + 900)
 
     def session(p: str, why: str) -> dict:
         tell(stage=why)
-        meta = llm.build(p, workdir, timeout=left())
+        meta = worker.build(p, workdir, timeout=left())
         cost[0] += meta.get("cost_usd") or 0
-        log["sessions"].append({"why": why, "minutes": round((meta.get("ms") or 0) / 60000, 1),
+        log["sessions"].append({"why": why, "llm": meta.get("llm"), "model": meta.get("model"),
+                                "minutes": round((meta.get("ms") or 0) / 60000, 1),
                                 "cost_usd": meta.get("cost_usd"), "text": (meta.get("text") or "")[-600:]})
         tell()
         return meta
@@ -359,8 +378,19 @@ def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: li
                            "continuing after the jobs finished")
         return meta
 
-    meta = session(RESUME.format(reason="You were interrupted (server restart); check the jobs and continue.")
-                   if resuming else prompt, "building")
+    if mixed:
+        tell(stage="splitting the build into subtasks")
+        d = delegate(llm, goal=goal + "\nApproved stack:\n" + (st or "- a mechanistic model fitted to the "
+                                                               "training data") + chain_text(chain),
+                     context=prompt, workdir=workdir, n_max=4, timeout=left(),
+                     progress=lambda: tell(stage="running the subtasks"))
+        log["delegate"] = d
+        cost[0] += d.get("cost_usd") or 0
+        meta = session(prompt + "\n\n" + ASSEMBLE.format(delegate=_delegate_text(d)),
+                       "assembling model.py from the subtasks")
+    else:
+        meta = session(RESUME.format(reason="You were interrupted (server restart); check the jobs and continue.")
+                       if resuming else prompt, "building")
     meta = settle(meta)
     check = verify(workdir)
     for _ in range(2):
@@ -376,13 +406,13 @@ def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: li
                                          "(see QA.md); check whether they were done properly:\n%s" % (
                                              rnd, _fix_text(log["qa"][-1])))
         tell(stage="QA review")
-        r = llm.build(REVIEW.format(held=held_titles, knobs=json.dumps(problem["knobs"]), previous=prev),
-                      workdir, timeout=None if not deadline else left(), schema=QA_SCHEMA,
-                      tools="Bash,Read,Write,Glob,Grep,WebSearch,WebFetch")
+        r = reviewer.build(REVIEW.format(held=held_titles, knobs=json.dumps(problem["knobs"]), previous=prev),
+                           workdir, timeout=None if not deadline else left(), schema=QA_SCHEMA,
+                           tools="Bash,Read,Write,Glob,Grep,WebSearch,WebFetch")
         cost[0] += r.get("cost_usd") or 0
         qa = r.get("data") or {"overall": "fail", "summary": "the reviewer returned nothing", "methods": [],
                                "model": {"verdict": "fail", "issues": []}}
-        log["qa"].append({"round": rnd, **qa})
+        log["qa"].append({"round": rnd, "llm": r.get("llm"), **qa})
         (workdir / "qa.json").write_text(json.dumps(log["qa"], indent=1))
         tell()
         if qa["overall"] != "fix" or rnd == qa_rounds or (deadline and time.time() > deadline):
@@ -406,7 +436,7 @@ def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: li
     return {"path": str(workdir / "model.py"), "check": check, "report": report,
             "summary": (meta.get("text") or "")[-2000:], "cost_usd": round(cost[0], 3),
             "seconds": round(time.time() - t0, 1), "qa": last, "qa_rounds": len(log["qa"]),
-            "sessions": log["sessions"], "jobs": jobs(workdir)}
+            "sessions": log["sessions"], "jobs": jobs(workdir), "delegate": log.get("delegate")}
 
 
 def _fix_text(qa: dict) -> str:

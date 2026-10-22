@@ -10,6 +10,7 @@ function buildBox(b){if(!b)return '';const r=b.report||{};const ms=r.methods||[]
    ${r.model?`<p>${esc(r.model)}</p>`:''}
    ${ms.length?`<table class="mtab"><tr><th>method</th><th>status</th><th>what it gave</th></tr>${ms.map(m=>`<tr><td>${esc(m.name||m.id)}</td><td><span class="pill ${m.status==='ran'?'blind':m.status==='skipped'?'off':'web'}">${esc(m.status||'')}</span></td><td>${esc(m.what||'')}${m.values&&Object.keys(m.values).length?mvals(m.values):''}</td></tr>`).join('')}</table>`:''}
    ${(r.limits||[]).length?`<p class="help"><b>Limits:</b> ${esc(r.limits.join(' · '))}</p>`:''}
+   ${mdSubs(b.delegate)}
    ${b.check.ok?'':`<pre class="help" style="white-space:pre-wrap">${esc(b.check.out)}</pre>`}${qaBox(b.qa,b.qa_rounds)}</div>`}
 const QCOL={pass:'blind',fix:'web',fail:'off',skipped:'off'};
 function qaBox(q,n){if(!q)return '';
@@ -19,8 +20,15 @@ function qaBox(q,n){if(!q)return '';
 function progBox(g){if(!g)return '';const js=g.jobs||[];
   return `<div class="abox"><h4>Simulations in progress <span class="help">${esc(g.stage)}${g.round?' · QA round '+g.round:''} · ${fmt(g.minutes||0)} min</span></h4>
    ${js.length?`<table class="mtab"><tr><th>job</th><th>state</th><th>min</th><th>last log line</th></tr>${js.map(j=>`<tr><td>${esc(j.id)}${j.gpu!=null?' <span class="pill">GPU'+j.gpu+'</span>':''}</td><td><span class="pill ${j.state==='done'?'blind':j.state==='running'?'web':'off'}">${esc(j.state)}</span></td><td>${fmt(j.minutes)}</td><td class="help" style="font-family:monospace">${esc(j.tail)}</td></tr>`).join('')}</table>`:'<p class="help">No detached jobs yet; the builder is working in its session.</p>'}
-   ${(g.sessions||[]).length?`<p class="help"><b>Builder sessions:</b> ${esc(g.sessions.map(x=>x.why+' ('+fmt(x.minutes)+' min)').join(' → '))}</p>`:''}
-   ${(g.qa||[]).map(x=>`<p class="help"><b>QA round ${x.round}: ${esc(x.overall)}</b> — ${esc(x.summary)}</p>`).join('')}</div>`}
+   ${mdSubs(g.delegate)}
+   ${(g.sessions||[]).length?`<p class="help"><b>Builder sessions:</b> ${esc(g.sessions.map(x=>x.why+(x.llm?` [${x.llm}]`:'')+' ('+fmt(x.minutes)+' min)').join(' → '))}</p>`:''}
+   ${(g.qa||[]).map(x=>`<p class="help"><b>QA round ${x.round}${x.llm?` [${esc(x.llm)}]`:''}: ${esc(x.overall)}</b> — ${esc(x.summary)}</p>`).join('')}</div>`}
+/* the delegated subtasks of a mixed build: which light model wrote what, and whether
+   its acceptance check passed (the plan model split them; see the md- switch in the chat) */
+function mdSubs(d){if(!d||!d.subtasks||!d.subtasks.length)return '';
+  return `<table class="mtab" style="margin:6px 0"><tr><th>subtask</th><th>written by</th><th>acceptance check</th></tr>${d.subtasks.map(t=>
+    `<tr><td>${esc(t.title)} <span class="help">${esc(t.dir)}</span></td><td><span class="mdtag">${esc(t.llm)}</span> <span class="help">${esc(t.model||'')}</span></td>
+     <td><span class="pill ${t.check&&t.check.ok?'blind':'off'}">${t.check&&t.check.ok?'passed':'failed'}</span>${t.rounds>1?' <span class="help">after a fix round</span>':''}</td></tr>`).join('')}</table>`}
 function pBench(s,P,live){const S=P.summary;if(!S)return P.build&&!s.busy?`<div class="apanel"><h3>Benchmark</h3>${buildBox(P.build)}</div>`:P.progress?`<div class="apanel"><h3>Building the simulator</h3>${progBox(P.progress)}</div>`:wait(s.busy||'Benchmarking.');
   const vs=S.variants||[];const V=AG.meta.variants||{};
   const cards=vs.map(v=>`<div class="abox ${v===P.variant?'best':''}"><div class="row"><i style="width:10px;height:10px;border-radius:2px;background:${VCOL[v]}"></i><b>${esc(v)}</b></div>

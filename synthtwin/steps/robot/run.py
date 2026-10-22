@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import time
 
+from synthtwin import steps
 from synthtwin.steps.recipe.schema import EQUIPMENT, MATERIALS
 from synthtwin.steps.robot import package as pkg
 
@@ -32,7 +33,7 @@ def fill(agent, sid: str) -> None:
     rc = req.get("recipe") or {}
     if not rc or (rc.get("materials") and rc.get("equipment")) or not agent.cfg.llm:
         return
-    ans = agent.cfg.llm.ask(
+    ans = agent.cfg.llm.role(steps.role("robot", "materials")).ask(
         "You prepare a protocol package for a self-building lab. From the recipe, list every material "
         "(chemicals, stocks, solvents, substrates; name, amount, role) and every piece of equipment or tool "
         "(instruments, vessels, measuring tools) it needs. Only what the recipe implies; no extras.",

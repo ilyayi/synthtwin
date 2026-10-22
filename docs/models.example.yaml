@@ -1,0 +1,30 @@
+# Named LLM backends for the study agent, beyond the built-in `claude` and `stub`.
+# Loaded from --models PATH, else $SYNTHTWIN_MODELS, else ~/.config/synthtwin/models.yaml
+# (keep the real file there; this one is a generic template).
+#
+# Each backend is a command prefix that replaces `claude`: any CLI taking the same
+# arguments (a provider wrapper, a local-server proxy) works. Fields:
+#   cmd    the prefix (list); the agent appends -p --model ... --output-format json ...
+#   model  default model name passed through (wrappers usually map opus/sonnet/haiku)
+#   label  what the UI shows
+#   kind   frontier | light — frontier plans (agent turns, QA review), light executes
+#   check  availability test: a URL the model server answers, or a command (list or
+#          string) that exits 0. Without one, cmd's first word must be on PATH.
+#
+# Server: --llm NAME is the plan backend (and the work backend too), --llm-work NAME
+# the light executor, e.g. --llm claude --llm-work local. The UI's model switch offers
+# presets (single backends and plan/execute pairs) built from these names; unavailable
+# backends are shown disabled with the reason. Switching at runtime needs no restart.
+backends:
+  cloud:                     # a second frontier provider behind a wrapper CLI
+    cmd: [my-wrapper, --provider]
+    model: opus
+    label: Cloud model
+    kind: frontier
+    check: [my-wrapper, --provider, --ping]          # must exit 0 when reachable
+  local:                     # a local model server behind the same CLI shape
+    cmd: [my-wrapper, --local]
+    model: opus
+    label: Local model
+    kind: light
+    check: {url: "http://127.0.0.1:1234/v1/models"} # the server answering = up

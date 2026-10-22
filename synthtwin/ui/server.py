@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import threading
 import time
@@ -66,12 +67,15 @@ OPTIONS = {
 
 
 class App:
-    def __init__(self, cfg: runner.Config, screen_index: str | None = None, viz: str | Path | None = None):
+    def __init__(self, cfg: runner.Config, screen_index: str | None = None, viz: str | Path | None = None,
+                 models: str | Path | None = None):
         self.cfg = cfg
         self.studies = cfg.data_dir / "studies"
         self.lock = threading.Lock()
         self.viz = Viz(viz)
         self.agent = engine.Agent(cfg) if getattr(cfg, "llm", None) else None
+        self.models_path = models   # models.yaml: named backends beyond claude/stub
+        self._avail: tuple[float, dict[str, tuple[bool, str]]] = (0.0, {})
         self.screen_index = Path(screen_index).expanduser() if screen_index else None
         self.screens = cfg.data_dir / "screens"
         self._screen_meta: dict | None = None
@@ -109,6 +113,38 @@ class App:
             if c["id"] == sid:
                 return c
         return json.loads(self.path(sid).read_text())
+
+    # ---------------------------------------------------------- model mix
+    def models(self) -> dict:
+        """The named backends with availability, the current plan/work mix and the presets."""
+        from synthtwin.core import llm as llmmod
+        reg = llmmod.load_backends(self.models_path)
+        if time.time() - self._avail[0] > 20:   # availability checks are not free; cache them briefly
+            self._avail = (time.time(), {n: llmmod.available(spec) for n, spec in reg.items()})
+        ok = self._avail[1]
+        cur = self.agent.cfg.llm if self.agent else None
+        plan, work = (getattr(cur, r, cur) for r in ("plan", "work"))
+        return {"enabled": bool(self.agent), "current": bool(cur),
+                "backends": [{"name": n, "label": spec.get("label", n), "kind": spec.get("kind", ""),
+                              "model": spec.get("model", ""), "available": ok[n][0], "reason": ok[n][1]}
+                             for n, spec in reg.items()],
+                "plan": plan.name if cur else None, "work": work.name if cur else None,
+                "presets": [{"name": n, "plan": p, "work": w} for n, p, w in llmmod.PRESETS
+                            if p in reg and w in reg]}
+
+    def set_models(self, body: dict) -> dict:
+        """Switch the mix at runtime (no restart): {plan, work} backend names, work defaulting to plan."""
+        from synthtwin.core import llm as llmmod
+        if not self.agent:
+            raise ValueError("the study agent is off (start the server with --llm)")
+        reg = llmmod.load_backends(self.models_path)
+        plan, work = body.get("plan"), body.get("work") or body.get("plan")
+        for n in filter(None, (plan, work)):
+            if n not in reg:
+                raise ValueError(f"unknown backend {n!r} (have: {' | '.join(sorted(reg))})")
+        with self.lock:
+            self.agent.cfg.llm = llmmod.make_team(plan, work, path=self.models_path)
+        return self.models()
 
     # ---------------------------------------------------------- actions
     def create(self, body: dict) -> dict:
@@ -395,6 +431,8 @@ def make_handler(app: App):
                     return self._json({"enabled": bool(app.agent), "steps": steps.STEPS,
                                        "quantities": engine.QUANTITIES, "methods": catalog.METHODS,
                                        "variants": bench.VARIANTS, "protocols": protocols.manifest()})
+                if path == "/api/models":
+                    return self._json(app.models())
                 if path == "/api/studies":
                     return self._json(app.list())
                 if path == "/api/screen":
@@ -428,6 +466,8 @@ def make_handler(app: App):
                 body = json.loads(self.rfile.read(n) or b"{}")
                 if self.path == "/api/studies":
                     return self._json(app.create(body), 201)
+                if self.path == "/api/models":
+                    return self._json(app.set_models(body))
                 if self.path == "/api/screen":
                     return self._json(app.screen_run(body), 201)
                 m = re.match(r"^/api/screen/([a-z0-9-]+)/queue$", self.path)
@@ -501,8 +541,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--scores", help="*scores.jsonl file or directory from `sweep score` (A5)")
     ap.add_argument("--n-eval", type=int, default=30)
     ap.add_argument("--vault", help="sealed outcomes of the sweep cards (benchmark scoring only)")
-    ap.add_argument("--llm", default="claude", help="study agent backend: claude | stub | off")
+    ap.add_argument("--llm", default="claude", help="study agent backend: claude | stub | off, or a name "
+                                                    "from the models file")
+    ap.add_argument("--llm-work", default=None, help="the work backend of the mix (default: same as --llm)")
     ap.add_argument("--llm-model", default=None)
+    ap.add_argument("--models", help="models.yaml naming extra LLM backends (glm, a local server, ...); "
+                                     "see docs/models.example.yaml")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--no-web", action="store_true", help="no literature search in the agent")
     ap.add_argument("--triage", choices=["valency"], help="rank papers from a paper index before the literature "
@@ -526,11 +570,22 @@ def main(argv: list[str] | None = None) -> int:
             toolbox.tools_text(a.tools)
         except Exception as exc:
             ap.error(f"--tools {a.tools}: {type(exc).__name__}: {exc}")
+    try:          # same for the models file and the backend names
+        reg = llmmod.load_backends(a.models)
+    except Exception as exc:
+        src = a.models or os.environ.get("SYNTHTWIN_MODELS") or llmmod.DEFAULT_MODELS_FILE
+        ap.error(f"models file {src}: {type(exc).__name__}: {exc}")
+    if a.llm != "off" and a.llm not in reg:
+        ap.error(f"--llm {a.llm}: unknown backend (have: {' | '.join(sorted(reg))})")
+    if a.llm_work and a.llm_work not in reg:
+        ap.error(f"--llm-work {a.llm_work}: unknown backend (have: {' | '.join(sorted(reg))})")
     cfg = engine.AgentConfig(a.data, a.library, a.robot, a.cards, a.scores, a.n_eval, vault=a.vault,
-                             llm=None if a.llm == "off" else llmmod.make(a.llm, a.llm_model),
+                             llm=None if a.llm == "off" else llmmod.make_team(a.llm, a.llm_work, a.llm_model,
+                                                                              path=a.models),
                              workers=a.workers, web=not a.no_web, triage=a.triage, tools=a.tools, build_minutes=a.build_minutes,
                              qa_rounds=a.qa_rounds, toolbox=None if a.no_install else a.toolbox)
-    srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(App(cfg, a.screen_index, viz=a.viz)))
+    srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(App(cfg, a.screen_index, viz=a.viz,
+                                                                     models=a.models)))
     print(f"SynthTwin UI on http://127.0.0.1:{a.port}  (data: {cfg.data_dir})")
     srv.serve_forever()
     return 0

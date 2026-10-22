@@ -7,6 +7,11 @@
     "validate"
   ],
   "gate": true,
+  "models": {
+    "turn": "plan",
+    "build": "work",
+    "review": "plan"
+  },
   "name": "Benchmark",
   "short": "Does the stack predict them?",
   "what_happens": "The stack predicts the sample; blind studies are scored against sealed data.",

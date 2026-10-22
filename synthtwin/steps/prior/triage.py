@@ -17,7 +17,7 @@ import urllib.request
 from difflib import SequenceMatcher
 from typing import Any
 
-from synthtwin import protocols
+from synthtwin import protocols, steps
 
 BACKENDS = {"valency": tuple(f"mcp__claude_ai_Valency__{t}" for t in (
     "semantic_search_papers", "search_by_abstract", "search_by_abstract_batch", "get_paper_by_id",
@@ -49,7 +49,7 @@ def run(llm: Any, problem: dict, backend: str = "valency", limit: int = 12, veri
     # name the tools: connector tools may be deferred (loaded on demand), and an unnamed one looks absent
     prompt = ("Researcher's problem:\n" + json.dumps(problem, indent=1) + f"\n\nReturn at most {limit} papers."
               + "\n\nThe paper-index tools (load them by name if they are deferred): " + ", ".join(tools))
-    ans = llm.ask(SYSTEM, prompt, SCHEMA, mcp=tools)
+    ans = llm.role(steps.role("prior", "triage")).ask(SYSTEM, prompt, SCHEMA, mcp=tools)
     papers, seen = [], set()
     for p in ans.get("papers") or []:
         doi = _doi(p.get("doi", ""))

@@ -291,7 +291,7 @@ def refine(llm: Any, result: dict, rows: list[dict], k: int = 20) -> dict:
         lines.append(f"Family: {f['family']} (also seen as: {', '.join(f['names'])})\n"
                      f"Reported best: {_fmt(best['value'])} {result['metric']['unit']}\n"
                      f"Evidence: \"{best['snippet']}\"\nAbstract: {ab or 'not available'}\n")
-    ans = llm.ask(_SYSTEM, "\n\n".join(lines), _schema())
+    ans = llm.role("work").ask(_SYSTEM, "\n\n".join(lines), _schema())   # light work (the refine default)
     reviews = ans.get("reviews") or []
     by_name = {f["family"]: f for f in result["families"]}
     met, better = result["metric"], result["metric"]["better"]

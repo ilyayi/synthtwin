@@ -6,6 +6,9 @@
     "validate"
   ],
   "gate": true,
+  "models": {
+    "turn": "plan"
+  },
   "name": "Benchmark sample",
   "short": "Studies to test the stack on",
   "what_happens": "It picks the related studies the stack must predict before it is trusted.",

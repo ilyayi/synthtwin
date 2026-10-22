@@ -6,6 +6,9 @@
     "find-simulations"
   ],
   "gate": true,
+  "models": {
+    "turn": "plan"
+  },
   "name": "Simulation stack",
   "short": "Methods, time, insight",
   "what_happens": "It designs the simulation stack and shows it at three scales, from the reactor down to atoms.",

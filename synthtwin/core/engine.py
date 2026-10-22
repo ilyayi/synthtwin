@@ -301,8 +301,10 @@ a kMC or phase-field code), name it as the tool, mark it '(install)' and include
         prompt = ("STATE:\n" + json.dumps(self.context(s), default=str)[:60000] + "\n\nCHAT (oldest first):\n"
                   + "\n".join(f"{m['role'].upper()} [{m['phase']}]: {m['text']}" for m in hist)
                   + (f"\n\nNOTE: {extra}" if extra else "") + "\n\nWrite your next turn.")
-        # the stack designer may search for simulation studies of similar systems (lessons per chain link)
-        ans = self.cfg.llm.ask(system, prompt, SCHEMAS[key], web=bool(self.cfg.web) and ph == "stack")
+        # the stack designer may search for simulation studies of similar systems (lessons per chain link);
+        # the step's step.json "models" picks plan or work for the turn
+        ans = self.cfg.llm.role(steps.role(ph, "turn")).ask(system, prompt, SCHEMAS[key],
+                                                            web=bool(self.cfg.web) and ph == "stack")
         meta = ans.pop("_meta", {}) if isinstance(ans, dict) else {}
         follow = self.mutate(sid, lambda s: self.apply(s, ph, ans, meta))
         if follow:

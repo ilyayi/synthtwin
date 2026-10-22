@@ -6,6 +6,9 @@
     "design"
   ],
   "gate": true,
+  "models": {
+    "turn": "plan"
+  },
   "name": "Recipe",
   "short": "What to run, and why",
   "what_happens": "The best proposal is written up as a lab recipe with checks and risks.",

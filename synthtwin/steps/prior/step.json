@@ -6,8 +6,13 @@
     "search-data"
   ],
   "gate": true,
+  "models": {
+    "turn": "plan",
+    "lit": "work",
+    "triage": "work"
+  },
   "name": "Related studies",
   "short": "What was swept before, what came out",
-  "what_happens": "It gathers related studies — benchmark cases, the mined library, the literature — and reads what they swept.",
+  "what_happens": "It gathers related studies \u2014 benchmark cases, the mined library, the literature \u2014 and reads what they swept.",
   "what_you_do": "Read; ask for a sharper literature search"
 }

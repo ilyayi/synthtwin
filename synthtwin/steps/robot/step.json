@@ -6,6 +6,10 @@
     "handoff"
   ],
   "gate": false,
+  "models": {
+    "turn": "plan",
+    "materials": "work"
+  },
   "name": "Robot",
   "short": "Run it, feed results back",
   "what_happens": "The recipe goes to the self-building lab as a protocol package (conditions, materials, equipment, measurements); the results come back here.",

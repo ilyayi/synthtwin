@@ -6,6 +6,9 @@
     "onboard-problem"
   ],
   "gate": true,
+  "models": {
+    "turn": "plan"
+  },
   "name": "Goal",
   "short": "Agree a measurable target",
   "what_happens": "The agent turns your problem into a measurable goal: targets, knobs, fixed conditions.",
