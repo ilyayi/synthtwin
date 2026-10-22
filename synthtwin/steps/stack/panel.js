@@ -6,10 +6,19 @@ const STATUS_ORDER=['runnable','cached','literature','queued','planned'];
 const STATUS_WORD={runnable:'runs here now',cached:'cached results',literature:'looked up',queued:'would run on the GPU pool',planned:'not built yet'};
 const dur=s=>s<90?`${Math.round(s)} s`:s<5400?`${Math.round(s/60)} min`:s<172800?`${(s/3600).toFixed(s<36000?1:0)} h`:`${Math.round(s/86400)} days`;
 
-/* formula text -> HTML: _x / _{xy} -> sub, ^x / ^{xy} -> sup (unicode Greek and operators pass through) */
+/* formula text -> HTML. Agents write formulas in plain text (tau, p_sat, sqrt(x), k_B^3), the
+   catalogue in unicode; both render: Greek names and hbar/inf/sqrt -> symbols, _x / _xyz / _{x y}
+   -> sub, ^x / ^-x / ^{x y} -> sup, * -> ·, <= >= -> → as symbols. */
+const GREEK={alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',eps:'ε',zeta:'ζ',eta:'η',theta:'θ',kappa:'κ',
+  lambda:'λ',lam:'λ',mu:'μ',nu:'ν',xi:'ξ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',chi:'χ',psi:'ψ',omega:'ω',
+  Gamma:'Γ',Delta:'Δ',Theta:'Θ',Lambda:'Λ',Sigma:'Σ',Phi:'Φ',Psi:'Ψ',Omega:'Ω',hbar:'ħ',inf:'∞',infty:'∞'};
+const GREEK_RE=new RegExp(`(?<![A-Za-z])(${Object.keys(GREEK).sort((a,b)=>b.length-a.length).join('|')})(?![A-Za-z])`,'g');
 function fmtFormula(f){return esc(f)
-  .replace(/\^\{([^}]*)\}/g,'<sup>$1</sup>').replace(/\^([A-Za-z0-9+\-−–])/g,'<sup>$1</sup>')
-  .replace(/_\{([^}]*)\}/g,'<sub>$1</sub>').replace(/_([A-Za-z0-9+\-−–])/g,'<sub>$1</sub>')}
+  .replace(GREEK_RE,(_,w)=>GREEK[w]).replace(/\bsqrt\(/g,'√(')
+  .replace(/ \* /g,' · ').replace(/(\w|\)) ?\* ?(\w|\()/g,'$1·$2')
+  .replace(/&lt;=/g,'≤').replace(/&gt;=/g,'≥').replace(/-&gt;/g,'→')
+  .replace(/\^\{([^}]*)\}/g,'<sup>$1</sup>').replace(/\^([+\-−]?[\p{L}\p{N}.]+)/gu,'<sup>$1</sup>')
+  .replace(/_\{([^}]*)\}/g,'<sub>$1</sub>').replace(/_([+\-−]?[\p{L}\p{N}∞]+)/gu,'<sub>$1</sub>')}
 
 /* ---- stack */
 /* the three scales of the same stack: reactor -> molecular -> atomistic, each with its own visual */
@@ -160,7 +169,7 @@ function scaleCard(s,P,sc,i,n){
     <div><b>${esc(p.name)}</b>${p.formula?`<span class="f">${fmtFormula(p.formula)}</span>`:''}${p.what?`<span class="swhat">${esc(p.what)}</span>`:''}</div></div>`).join('');
   const ruler=[sc.size,sc.time].filter(Boolean).join(' · ')||M.ruler;
   return `<div class="scard" style="--sc:${M.col};width:${100-4*i}%" data-scale="${sc.id}">
-   <div class="shead">${icon(M.icon,'lg')}<div class="sti"><b>${esc(sc.title||M.title)}</b>
+   <div class="scl-head">${icon(M.icon,'lg')}<div class="sti"><b>${esc(sc.title||M.title)}</b>
      <span class="sruler">${icon('ruler','lg2')}${esc(ruler)}</span></div><span class="stag">${M.name}</span></div>
    <p class="ssum">${esc(sc.summary||M.summary)}</p>
    ${procs?`<div class="sprocs">${procs}</div>`:''}

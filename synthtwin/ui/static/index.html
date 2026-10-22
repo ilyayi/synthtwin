@@ -37,9 +37,12 @@ section>h3{margin:0 0 6px}
 .loop{position:absolute;left:calc(12.5% + 4px);right:calc(6.25% - 2px);bottom:8px;height:40px;pointer-events:none}
 .loop svg{width:100%;height:100%;overflow:visible}
 .loop .lbl2{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);font:500 11.5px/1 var(--mono);color:var(--cy);background:var(--bg);padding:2px 8px;white-space:nowrap}
-.gate{position:absolute;left:calc(37.5% + 2px);top:-10px;font:600 10px/1 var(--mono);color:var(--cy);letter-spacing:.06em}
+.gate{position:absolute;left:calc(50% + 2px);top:-12px;font:600 10px/1 var(--mono);color:var(--cy);letter-spacing:.06em}
 .proto{margin-top:6px}
 .proto .card{padding:18px 20px}
+.proto .pblk{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.proto .pnm{margin:0}
+.proto ol{margin:8px 0 0;padding-left:20px;color:var(--ink2);font-size:14px;display:flex;flex-direction:column;gap:5px}
+.proto ol .pg{display:block;font:500 11.5px/1.4 var(--mono);color:var(--cy)}
 .proto ul{margin:8px 0 0;padding-left:18px;color:var(--ink2);font-size:14.5px;display:flex;flex-direction:column;gap:4px}
 @media(max-width:980px){.flow{grid-template-columns:repeat(4,minmax(0,1fr));padding-bottom:12px}.loop,.fnode::after{display:none}.gate{display:none}}
 @media(max-width:520px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -57,7 +60,8 @@ section>h3{margin:0 0 6px}
 .strip i{height:6px;border-radius:3px;background:rgba(255,255,255,.08)}
 .strip i.done{background:var(--ok)}.strip i.running{background:var(--cu)}.strip i.warn{background:var(--warn)}
 .strip i.failed{background:var(--bad)}.strip i.awaiting_user{background:var(--cy)}.strip i.skipped{background:rgba(255,255,255,.18)}
-.striplab{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;font:500 9.5px/1 var(--mono);color:var(--mute)}
+.striplab{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;font:500 9.5px/1 var(--mono);color:var(--mute)}
+.striplab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{color:var(--ink3);font-size:14px}
 
 /* new study wizard */
@@ -116,14 +120,15 @@ let STAGES=[],OPT={},timer=null,W=null,flowSel=null;
 function flow(stages,statusById,onclick){
   return `<div class="flow">${stages.map(s=>{const st=statusById?.[s.id];
     return `<button class="fnode ${st||''} ${flowSel===s.id&&!statusById?'sel':''}" data-id="${s.id}" type="button">
-      <span class="fid">${s.id}</span><b>${esc(s.name)}</b><span class="fs">${esc(s.short)}</span>
+      <span class="fid">${String(s.order||STAGES.indexOf(s)+1).padStart(2,'0')}</span><b>${esc(s.name)}</b><span class="fs">${esc(s.short)}</span>
       <span class="fst">${st?esc(WORD[st]||st):'&nbsp;'}</span></button>`}).join('')}
-    <span class="gate">↑ MD/DFT gate</span>
+    <span class="gate">↓ trust gate: must beat the null</span>
     <div class="loop"><svg viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M100,0 V30 H0 V0" fill="none" stroke="rgba(98,198,242,.55)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-dasharray="4 4"/></svg>
-      <span class="lbl2">A8 results → new recipes (A2) + new held-out cases (A3)</span></div></div>`}
+      <span class="lbl2">robot results → new related studies + new blind benchmark cases</span></div></div>`}
 
-function stripHtml(st){return `<div class="strip">${STAGES.map(s=>`<i class="${(st.find(x=>x.id===s.id)||{}).status||''}" title="${s.id} ${s.name}"></i>`).join('')}</div>
-  <div class="striplab">${STAGES.map(s=>`<span>${s.id}</span>`).join('')}</div>`}
+const STRIPLAB=['Goal','Prior','Stack','Sample','Bench','Case','Recipe','Robot'];
+function stripHtml(st){return `<div class="strip">${STAGES.map(s=>`<i class="${(st.find(x=>x.id===s.id)||{}).status||''}" title="${esc(s.name)}"></i>`).join('')}</div>
+  <div class="striplab">${STRIPLAB.map(t=>`<span>${t}</span>`).join('')}</div>`}
 
 function card(s){if(s.kind==='agent')return agentCard(s);const st=s.kind==='case'?'case study':(WORD[s.status]||s.status);
   return `<button class="scard" type="button" onclick="location.hash='#/s/${esc(s.id)}'">
@@ -141,21 +146,29 @@ async function home(anchor){
    <p class="lede">Describe your problem and an agent works it through with you: a measurable goal, what related studies swept and found, a simulation stack with time and insight, a benchmark on known results, your case simulated, and a recipe for the robot. Underneath, every study follows the same eight stages. Past results are held out as tests, the simulator is validated against them before it is trusted, MD/DFT is used only where it passes a gate, and a person approves every experiment before the robot runs it.</p>
    <p style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn cu big" href="#/new">Start a new study</a><a class="btn ghost big" href="#/cases">See the case studies</a></p></div>
   <section id="new"><h3>Start a new study</h3>${AG.meta&&AG.meta.enabled?`${agentStartHtml()}
-   <details class="more" style="margin-top:16px"><summary>Or fill the fixed pipeline form (A1 to A8, no conversation)</summary><div class="inner"><p class="help secnote">Four steps. The study runs A1 to A6 on its own and stops at A7 for your approval.</p><div id="wizard"></div></div></details>`
-   :`<p class="help secnote">Four steps. The study runs A1 to A6 on its own and stops at A7 for your approval.</p><div id="wizard"></div>`}</section>
+   <details class="more" style="margin-top:16px"><summary>Or fill a quick form instead (no conversation)</summary><div class="inner"><p class="help secnote">Four steps. The study then runs on its own and stops at the recipe for your approval.</p><div id="wizard"></div></div></details>`
+   :`<p class="help secnote">Four steps. The study then runs on its own and stops at the recipe for your approval.</p><div id="wizard"></div>`}</section>
   <section id="pipeline"><h3>The pipeline</h3><p class="help secnote">Click a stage to read its protocol: the rules every study follows there.</p>
-   <div id="flowbox">${flow(STAGES)}</div><div class="proto" id="proto"></div></section>
+   <div id="flowbox">${flow(homeSteps())}</div><div class="proto" id="proto"></div></section>
   <section id="cases"><h3>Case studies</h3><p class="help secnote">Curated studies that went through the pipeline, with the decision taken at each stage and why.</p>
    <div class="cards">${L.cases.map(card).join('')||'<p class="empty">No case studies installed.</p>'}</div></section>
   <section id="mine"><h3>Your studies</h3><p class="help secnote">Newest first. Open one to follow it stage by stage.</p>
    <div class="cards">${L.studies.map(card).join('')||'<p class="empty">No studies yet. Start one below.</p>'}</div></section>
   </div>`;
-  bindFlow();showProto(flowSel||'A1');wizard();bindAgentStart();
+  bindFlow();showProto(flowSel||homeSteps()[0].id);wizard();bindAgentStart();
   if(anchor){const el=document.getElementById(anchor);if(el)el.scrollIntoView({behavior:'smooth'})}
   if(L.studies.some(s=>['running','queued'].includes(s.status))){clearTimeout(timer);timer=setTimeout(()=>{if(!location.hash.startsWith('#/s/')&&!W.dirty)home()},3000)}
 }
-function bindFlow(){document.querySelectorAll('#flowbox .fnode').forEach(b=>b.onclick=()=>{flowSel=b.dataset.id;$('#flowbox').innerHTML=flow(STAGES);bindFlow();showProto(flowSel)})}
-function showProto(id){const s=STAGES.find(x=>x.id===id);flowSel=id;
+function homeSteps(){return AG.meta?.steps?.length?AG.meta.steps:STAGES}
+function bindFlow(){document.querySelectorAll('#flowbox .fnode').forEach(b=>b.onclick=()=>{flowSel=b.dataset.id;$('#flowbox').innerHTML=flow(homeSteps());bindFlow();showProto(flowSel)})}
+function showProto(id){const s=homeSteps().find(x=>x.id===id)||homeSteps()[0];id=s.id;flowSel=id;
+  if(s.what_happens){const P=AG.meta.protocols||[];
+    document.querySelectorAll('#flowbox .fnode').forEach(b=>b.classList.toggle('sel',b.dataset.id===id));
+    $('#proto').innerHTML=`<div class="card"><p class="eyebrow">${String(s.order).padStart(2,'0')} · ${esc(s.name)}</p>
+     <p style="margin:10px 0 0;color:var(--ink)">${esc(s.what_happens)}</p><p class="help" style="margin:6px 0 0">You: ${esc(s.what_you_do)}</p>
+     ${s.protocols.map(pid=>{const p=P.find(x=>x.id===pid);return p?`<div class="pblk"><p class="pnm"><b>Protocol · ${esc(p.name)}</b> <span class="meta">v${esc(p.version)}</span></p>
+      <p class="help" style="margin:4px 0 0">${esc(p.purpose)}</p>
+      <ol>${(p.steps||[]).map(t=>`<li><b>${esc(t.name)}</b> ${esc(t.does)}${t.gate?`<span class="pg">gate: ${esc(t.gate)}</span>`:''}</li>`).join('')}</ol></div>`:''}).join('')}</div>`;return}
   document.querySelectorAll('#flowbox .fnode').forEach(b=>b.classList.toggle('sel',b.dataset.id===id));
   $('#proto').innerHTML=`<div class="card"><p class="eyebrow">${s.id} · ${esc(s.name)}</p><p style="margin:10px 0 0;color:var(--ink)">${esc(s.what)}</p>
    <ul>${s.protocol.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>`}
@@ -201,7 +214,7 @@ function paneR(){const w=W;const tg=Object.entries(w.targets).map(([q,t])=>`${q}
    <dt>Name</dt><dd>${esc(w.title||'(untitled)')}</dd><dt>Material</dt><dd>${esc(w.material)}</dd><dt>Methods</dt><dd>${esc(w.methods.join(', '))}</dd>
    <dt>Targets</dt><dd class="mono">${esc(tg)}</dd><dt>Knobs</dt><dd class="mono">${esc(Object.entries(w.knobs).map(([k,r])=>`${k} [${r[0]}, ${r[1]}]`).join('; '))}</dd>
    <dt>Fixed</dt><dd class="mono">${esc(Object.entries(w.fixed).map(([k,v])=>`${k}=${v}`).join('; ')||'—')}</dd><dt>Proposals</dt><dd>${w.n}</dd></dl>
-   <div class="total"><span class="help" style="margin:0">A1–A6 run automatically (the design step takes a few minutes). The study stops at A7 for your approval.</span></div></div>`}
+   <div class="total"><span class="help" style="margin:0">Everything up to the recipe runs automatically (designing your case takes a few minutes). The study stops at the recipe for your approval.</span></div></div>`}
 function read(){const w=W;const v=id=>{const e=$(id);return e?e.value:null};
   if($('#wtitle')){w.title=v('#wtitle');w.text=v('#wtext');w.methods=[...document.querySelectorAll('[data-meth]')].filter(e=>e.checked).map(e=>e.dataset.meth)}
   if($('[data-tq]')){const t={};document.querySelectorAll('[data-tq]').forEach(c=>{if(!c.checked)return;const q=c.dataset.tq,o={};
@@ -247,7 +260,7 @@ async function study(id){
   clearTimeout(timer);if(['running','queued'].includes(s.status))timer=setTimeout(()=>{if(location.hash==='#/s/'+id)study(id)},1500)}
 
 function stageHtml(s,x){const g=STAGES.find(t=>t.id===x.id);const cls=PCLS[x.status]||'queued';
-  return `<li class="pstep ${cls}" id="st-${x.id}" style="scroll-margin-top:80px"><div class="node"><span class="nid">${x.id}</span></div><div class="pbody">
+  return `<li class="pstep ${cls}" id="st-${x.id}" style="scroll-margin-top:80px"><div class="node"><span class="nid">${String(STAGES.indexOf(g)+1).padStart(2,'0')}</span></div><div class="pbody">
    <div class="ptop"><span class="pname">${esc(g.name)}</span><span class="sw ${x.status==='warn'?'warn':cls}">${x.status==='running'?'<span class="spin"></span>':''}${esc(WORD[x.status]||x.status)}</span></div>
    <p>${esc(x.summary||(x.status==='pending'?g.what:''))}</p>
    ${x.decisions?.length?`<ul class="dec">${x.decisions.map(d=>`<li><span class="q">${esc(d.q)}</span><span class="a">${esc(d.a)}</span>${d.why?`<span class="w">${esc(d.why)}</span>`:''}</li>`).join('')}</ul>`:''}
@@ -256,7 +269,7 @@ function stageHtml(s,x){const g=STAGES.find(t=>t.id===x.id);const cls=PCLS[x.sta
    ${x.id==='A8'&&x.status!=='pending'&&s.proposals?.some(q=>q.decision?.decision==='approve')?resultsHtml(s):''}
    ${x.log?.length?`<div class="logl">${x.log.map(esc).join('<br>')}</div>`:''}
    ${x.error?`<details class="more" data-k="err-${x.id}"><summary>Error detail</summary><div class="inner"><pre>${esc(x.error)}</pre></div></details>`:''}
-   <details class="more" data-k="proto-${x.id}"><summary>General protocol for ${x.id}</summary><div class="inner"><ul style="margin:0;padding-left:18px">${g.protocol.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div></details>
+   <details class="more" data-k="proto-${x.id}"><summary>General protocol for ${esc(g.name)}</summary><div class="inner"><ul style="margin:0;padding-left:18px">${g.protocol.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div></details>
   </div></li>`}
 function tableHtml(t){return `<div class="tbl"><div class="tt">${esc(t.title)}</div><table><thead><tr>${t.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
   <tbody>${t.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}

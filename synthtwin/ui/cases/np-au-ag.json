@@ -3,7 +3,7 @@
  "kind": "case",
  "status": "running",
  "title": "Au/Ag nanoparticle synthesis",
- "subtitle": "Size and size distribution from reaction conditions, checked against 7 published sweeps; MD/DFT used where the A4.2 gate says it pays off.",
+ "subtitle": "Size and size distribution from reaction conditions, checked against 7 published sweeps; MD/DFT used where the MD/DFT gate says it pays off.",
  "tags": [
   "nanoparticles",
   "Turkevich",
@@ -84,7 +84,7 @@
     },
     {
      "q": "Where does validation come from?",
-     "a": "gold sweeps (A3)",
+     "a": "gold sweeps (benchmark sample)",
      "why": "one-factor sweeps from open papers, blinded extraction"
     }
    ],
@@ -272,7 +272,7 @@
      ]
     },
     {
-     "title": "A4.2 decisions",
+     "title": "MD/DFT gate decisions",
      "columns": [
       "aspect",
       "parameter",
@@ -416,6 +416,6 @@
  ],
  "headline": {
   "kind": "info",
-  "text": "Scores are private for now: A5 shows the ablation design; the verdicts appear when the UI runs with the private score files."
+  "text": "Scores are private for now: the Benchmark stage shows the ablation design; the verdicts appear when the UI runs with the private score files."
  }
 }

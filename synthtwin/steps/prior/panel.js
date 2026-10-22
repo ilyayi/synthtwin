@@ -11,7 +11,7 @@ function studyBox(x,q){const sw=x.swept||[];const key=sw[0]?.key;
   const pts=(x.points||[]).filter(p=>p.value!=null||key&&p.conditions&&p.conditions[key]!=null);
   const vis=pts.filter(p=>p.outcomes&&p.outcomes[q]!=null).map(p=>[+(p.value??p.conditions[key]),p.outcomes[q]]);
   const sealed=pts.filter(p=>p.state&&p.state.startsWith('sealed')).map(p=>+(p.value??p.conditions[key]));
-  const mini=key&&(vis.length>=2||vis.length&&sealed.length)?lineChart({w:300,h:120,xlab:key,ylab:q,mini:true,
+  const mini=key&&vis.length===1&&sealed.length?blindStrip(key,q,vis[0],sealed):key&&vis.length>=2?lineChart({w:300,h:120,xlab:key,ylab:q,mini:true,
     series:[{pts:vis.map(v=>[v[0],v[1]]),color:'#d8894f',dots:true,line:vis.length>1&&sw.length===1}],marks:sealed}):'';
   return `<div class="abox"><div class="row">${srcPill(x)}<span class="pill">${esc(x.material)}</span>${x.method?`<span class="pill">${esc(x.method)}</span>`:''}${x.year?`<span class="pill">${esc(String(x.year).slice(0,4))}</span>`:''}</div>
    <h4>${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title||x.id)}</a>`:esc(x.title||x.id)}</h4>
@@ -20,8 +20,20 @@ function studyBox(x,q){const sw=x.swept||[];const key=sw[0]?.key;
    ${sw.length?`<div><span class="lbl">swept</span>${sw.map(w=>`<div class="row"><span class="pill">${esc(w.key)}</span>${(w.values||[]).slice(0,10).map(v=>`<span class="pill p">${esc(typeof v==='number'?fmt(v):v)}</span>`).join('')}</div>`).join('')}</div>`:''}
    ${Object.keys(x.fixed||{}).length?`<div><span class="lbl">held fixed</span><div class="row">${Object.entries(x.fixed).slice(0,8).map(([k,v])=>`<span class="pill p">${esc(k)}=${esc(typeof v==='number'?fmt(v):v)}</span>`).join('')}</div></div>`:''}
    <div class="row"><span class="lbl" style="margin:0">measured</span>${(x.quantities||[]).map(z=>`<span class="pill">${esc(z)}</span>`).join('')||'<span class="help">no outcomes</span>'}</div>
-   ${mini?`<div class="chart" style="padding:8px">${mini}${sealed.length?'<p class="cs">ticks on the axis: points sealed until the benchmark</p>':''}</div>`:''}
+   ${mini?`<div class="chart" style="padding:8px">${mini}${sealed.length&&vis.length>1?'<p class="cs">ticks on the axis: points sealed until the benchmark</p>':''}</div>`:''}
    ${x.takeaway?`<p>${esc(x.takeaway)}</p>`:''}<p class="help" style="margin:0">${esc(x.note||'')}</p></div>`}
+/* a blind card reveals one anchor point: show the sweep as a strip, the anchor
+   with its value and every sealed point as a "?" (no fake 2-D chart from one dot) */
+function blindStrip(key,q,an,sealed){const W=300,H=74,l=14,r=14,y=34;const xs=sealed.concat([an[0]]);
+  let x0=Math.min(...xs),x1=Math.max(...xs);if(x1===x0){x0-=1;x1+=1}const fx=v=>l+(v-x0)/(x1-x0)*(W-l-r);
+  let g=`<line x1="${l}" x2="${W-r}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 4"/>`;
+  const lab=[fx(an[0])];const room=x=>lab.every(u=>Math.abs(u-x)>22)&&(lab.push(x),true);
+  sealed.slice().sort((a,b)=>a-b).forEach(v=>{g+=`<circle cx="${fx(v)}" cy="${y}" r="7" fill="var(--bg2)" stroke="#8b8983" stroke-dasharray="2 2"/><text x="${fx(v)}" y="${y+3.5}" text-anchor="middle" style="fill:#8b8983;font-weight:600">?</text>
+    ${room(fx(v))?`<text x="${fx(v)}" y="${y+24}" text-anchor="middle">${fmt(v)}</text>`:''}`});
+  g+=`<circle cx="${fx(an[0])}" cy="${y}" r="6" fill="#d8894f"/><text x="${fx(an[0])}" y="${y-13}" text-anchor="middle" style="fill:var(--ink)">${fmt(an[1])}</text>
+    <text x="${fx(an[0])}" y="${y+24}" text-anchor="middle" style="fill:#d8894f">${fmt(an[0])}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(key)} sweep: one anchor, ${sealed.length} sealed">${g}</svg>
+   <p class="cs"><span style="color:#d8894f">●</span> anchor: ${esc(q)} = ${fmt(an[1])} at ${esc(key)} = ${fmt(an[0])} · ? ${sealed.length} sealed point${sealed.length>1?'s':''}, scored only by the benchmark</p>`}
 function triageBox(P){const t=P.triage;if(!t)return P.triage_error?`<div class="callout warn" style="margin-bottom:12px">Paper-index triage failed: ${esc(P.triage_error)}</div>`:'';
   const ps=t.papers||[];if(!ps.length)return '';
   const row=p=>`<li><a href="${esc(p.url||'#')}" target="_blank" rel="noopener">${esc(p.title)}</a>

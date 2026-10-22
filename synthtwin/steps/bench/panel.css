@@ -3,3 +3,6 @@
 .verd{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}
 .verd .abox{gap:4px}
 .verd .abox.best{box-shadow:inset 0 0 0 1.5px var(--ok)}
+.mvals{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:1px 12px;margin-top:6px;font:500 11.5px/1.45 var(--mono)}
+.mvals .k{color:var(--ink3);overflow-wrap:anywhere}.mvals .v{color:var(--ink2);overflow-wrap:anywhere}
+.mtab details.more{margin-top:4px}.mtab details.more summary{font-size:12px}

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 STAGES: list[dict] = [
     {
-        "id": "A1", "name": "Problem", "short": "State the target",
+        "id": "A1", "name": "Goal", "short": "Agree a measurable target",
         "what": "A problem: material, allowed methods, target outcomes, bounded knobs, fixed conditions.",
         "protocol": [
             "Every target must be measurable on the robot (size, SD/CV, LSPR, DLS).",
@@ -16,7 +16,7 @@ STAGES: list[dict] = [
         ],
     },
     {
-        "id": "A2", "name": "Recipe library", "short": "Published recipes",
+        "id": "A2", "name": "Related studies", "short": "What was swept before",
         "what": "Search published recipes of the same material and method; they calibrate the simulator and set novelty.",
         "protocol": [
             "Every recipe carries its source (DOI or title).",
@@ -25,7 +25,7 @@ STAGES: list[dict] = [
         ],
     },
     {
-        "id": "A3", "name": "Gold benchmark", "short": "Past results as tests",
+        "id": "A3", "name": "Benchmark sample", "short": "Past results as blind tests",
         "what": "One-factor sweeps from open papers, split into cards (one anchor point) and a sealed vault.",
         "protocol": [
             "Two blinded readers extract each series; only values both agree on are kept.",
@@ -34,7 +34,7 @@ STAGES: list[dict] = [
         ],
     },
     {
-        "id": "A4", "name": "Simulator", "short": "Model + MD/DFT gate",
+        "id": "A4", "name": "Simulation stack", "short": "Model + MD/DFT gate",
         "what": "predict(params) -> bands; calibrate(params, outcomes). Atomistic numbers enter only via physics overrides.",
         "protocol": [
             "Default tier is a continuum model fast enough for an optimiser (< 3 s per prediction).",
@@ -43,7 +43,7 @@ STAGES: list[dict] = [
         ],
     },
     {
-        "id": "A5", "name": "Validation", "short": "Score vs null",
+        "id": "A5", "name": "Benchmark", "short": "Scored against the null",
         "what": "Calibrate on each case's anchor, predict the held-out points, score against the vault.",
         "protocol": [
             "Scores per quantity: Spearman, MAE, band coverage, trend_ok (Spearman >= 0.8 for n >= 4).",
@@ -53,7 +53,7 @@ STAGES: list[dict] = [
         ],
     },
     {
-        "id": "A6", "name": "Design", "short": "Optimise + novelty",
+        "id": "A6", "name": "Your case", "short": "Optimise + novelty",
         "what": "Calibrate on the family, optimise the knobs, drop known recipes, write robot-ready proposals.",
         "protocol": [
             "Latin hypercube, then L-BFGS-B from the best starts; candidates kept apart in knob space.",
@@ -62,7 +62,7 @@ STAGES: list[dict] = [
         ],
     },
     {
-        "id": "A7", "name": "Approval", "short": "A person decides",
+        "id": "A7", "name": "Recipe", "short": "A person approves",
         "what": "A person approves every experiment before the robot runs it.",
         "protocol": [
             "The report gives sources, calibration status, validated vs exploratory, nearest known recipe, every assumption.",
@@ -70,11 +70,11 @@ STAGES: list[dict] = [
         ],
     },
     {
-        "id": "A8", "name": "Robot + feedback", "short": "Run, measure, learn",
+        "id": "A8", "name": "Robot", "short": "Run, measure, feed back",
         "what": "The robot runs approved proposals; measurements return to the library and the benchmark.",
         "protocol": [
             "Each measurement is compared with the predicted band.",
-            "Results return as recipes (A2) and, when they form a sweep, as new held-out cases (A3).",
+            "Results return as related studies and, when they form a sweep, as new blind benchmark cases.",
         ],
     },
 ]

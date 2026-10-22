@@ -8,7 +8,7 @@ const VCOL={null:'#77756f',model:'#62c6f2',uncalibrated:'#62c6f2',calibrated:'#d
 function buildBox(b){if(!b)return '';const r=b.report||{};const ms=r.methods||[];
   return `<div class="abox" style="margin-bottom:14px"><h4>What was built ${b.check.ok?'<span class="pill blind">passes its contract check</span>':'<span class="pill off">contract check fails</span>'} <span class="help">${fmt((b.seconds||0)/60)} min${b.cost_usd!=null?' · $'+fmt(b.cost_usd):''}</span></h4>
    ${r.model?`<p>${esc(r.model)}</p>`:''}
-   ${ms.length?`<table class="mtab"><tr><th>method</th><th>status</th><th>what it gave</th></tr>${ms.map(m=>`<tr><td>${esc(m.name||m.id)}</td><td><span class="pill ${m.status==='ran'?'blind':m.status==='skipped'?'off':'web'}">${esc(m.status||'')}</span></td><td>${esc(m.what||'')}${m.values&&Object.keys(m.values).length?'<div class="help" style="margin:2px 0 0">'+esc(Object.entries(m.values).map(([k,v])=>k+' = '+(typeof v==='number'?fmt(v):v)).join(' · '))+'</div>':''}</td></tr>`).join('')}</table>`:''}
+   ${ms.length?`<table class="mtab"><tr><th>method</th><th>status</th><th>what it gave</th></tr>${ms.map(m=>`<tr><td>${esc(m.name||m.id)}</td><td><span class="pill ${m.status==='ran'?'blind':m.status==='skipped'?'off':'web'}">${esc(m.status||'')}</span></td><td>${esc(m.what||'')}${m.values&&Object.keys(m.values).length?mvals(m.values):''}</td></tr>`).join('')}</table>`:''}
    ${(r.limits||[]).length?`<p class="help"><b>Limits:</b> ${esc(r.limits.join(' · '))}</p>`:''}
    ${b.check.ok?'':`<pre class="help" style="white-space:pre-wrap">${esc(b.check.out)}</pre>`}${qaBox(b.qa,b.qa_rounds)}</div>`}
 const QCOL={pass:'blind',fix:'web',fail:'off',skipped:'off'};
@@ -49,3 +49,8 @@ function pBench(s,P,live){const S=P.summary;if(!S)return P.build&&!s.busy?`<div 
    ${live&&vs.length?`<div class="row" style="display:flex;gap:10px;align-items:center"><label class="lbl" for="agvar" style="margin:0">Use for your case</label><select id="agvar">${vs.map(v=>`<option ${v===P.variant?'selected':''}>${v}</option>`).join('')}</select></div>`:''}
    ${detail}${errs.length?`<div class="callout warn" style="margin-top:10px">${esc(errs.map(x=>x.case_id+': '+x.error).join('; '))}</div>`:''}</div>`}
 STEP_PANELS.bench = pBench;
+
+/* a method's numbers as a key/value grid; long lists fold after six */
+function mvals(v){const e=Object.entries(v).map(([k,x])=>`<span class="k">${esc(k.replace(/_/g,' '))}</span><span class="v">${esc(typeof x==='number'?fmt(x):String(x))}</span>`);
+  const g=r=>`<div class="mvals">${r.join('')}</div>`;
+  return e.length<=6?g(e):g(e.slice(0,6))+`<details class="more"><summary>${e.length-6} more values</summary>${g(e.slice(6))}</details>`}

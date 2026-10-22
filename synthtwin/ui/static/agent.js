@@ -14,8 +14,6 @@ const GATE={goal:['Confirm the goal','Then I look for related studies (benchmark
 
 async function agentMeta(){if(!AG.meta)AG.meta=await api('/api/agent');return AG.meta}
 
-async function agentMeta(){if(!AG.meta)AG.meta=await api('/api/agent');return AG.meta}
-
 /* ---------------------------------------------------------------- home: start box */
 const EXAMPLES=['I need gold nanoparticles around 15 nm with a narrow size distribution for a DLS standard.',
   'Silver colloid with the LSPR peak near 400 nm, as monodisperse as the robot can make it.',
@@ -38,7 +36,7 @@ function agentCard(s){const ph=AG.meta?.steps||[];const cur=ph.findIndex(p=>p.id
    <div class="row"><span class="status ${st}">${esc(s.busy?'working':s.status==='complete'?'complete':'needs you')}</span>${s.material?`<span class="pill">${esc(s.material)}</span>`:''}<span class="pill">agent</span></div>
    <h4>${esc(s.title)}</h4><p>${esc(s.text||'')}</p>
    <div class="strip">${ph.map((p,i)=>`<i class="${i<cur||s.status==='complete'?'done':i===cur?(s.busy?'running':'awaiting_user'):''}" title="${esc(p.name)}"></i>`).join('')}</div>
-   <div class="striplab">${ph.map(p=>`<span>${esc(p.name.split(' ')[0])}</span>`).join('')}</div>
+   <div class="striplab">${ph.map(p=>`<span>${esc(p.id[0].toUpperCase()+p.id.slice(1))}</span>`).join('')}</div>
    <span class="meta">${new Date(s.created*1000).toLocaleString()} · ${esc((ph[cur]||{}).name||'')}</span></button>`}
 
 /* ---------------------------------------------------------------- study page */
@@ -58,14 +56,17 @@ async function agentStudy(id,s){await agentMeta();
 async function refresh(){if(!AG.sid)return;try{const s=await api('/api/studies/'+encodeURIComponent(AG.sid));render(s)}catch(e){}}
 function toast(m){const g=$('#aggate');if(g)g.insertAdjacentHTML('afterbegin',`<p class="err" style="margin:0 0 8px">${esc(m)}</p>`)}
 
+/* light markdown for chat: bold, inline code, bullets (the bubble keeps line breaks) */
+function chatMd(t){return esc(t).replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/^(\s*)[-*] /gm,'$1• ')}
 function render(s){const prev=AG.s;AG.s=s;
   const ph=AG.meta.steps,cur=s.phase,ci=ph.findIndex(p=>p.id===cur);
   const view=AG.view&&ph.findIndex(p=>p.id===AG.view)<=ci?AG.view:cur;
   // chat
   const log=$('#aglog');const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<40;
-  let lastPh=null;
-  log.innerHTML=s.chat.map(m=>{let d='';if(m.phase!==lastPh){lastPh=m.phase;d=`<div class="pdiv">${esc((ph.find(p=>p.id===m.phase)||{}).name||m.phase)}</div>`}
-    return d+`<div class="msg ${m.role}">${esc(m.text)}</div>`}).join('')
+  let lastPh=null;const rows=[];
+  for(const m of s.chat){const r=rows[rows.length-1];if(r&&r.m.role===m.role&&r.m.phase===m.phase&&r.m.text===m.text)r.n++;else rows.push({m,n:1})}
+  log.innerHTML=rows.map(({m,n})=>{let d='';if(m.phase!==lastPh){lastPh=m.phase;d=`<div class="pdiv">${esc((ph.find(p=>p.id===m.phase)||{}).name||m.phase)}</div>`}
+    return d+`<div class="msg ${m.role}">${chatMd(m.text)}${n>1?`<span class="rep">×${n}</span>`:''}</div>`}).join('')
     +(s.busy?`<div class="typing"><span class="spin"></span>${esc(s.busy)}…</div>`:'');
   if(atBottom||!prev||prev.chat.length!==s.chat.length||!!prev.busy!==!!s.busy)log.scrollTop=log.scrollHeight;
   const last=[...s.chat].reverse().find(m=>m.meta&&m.meta.cost_usd!=null);

@@ -128,8 +128,7 @@ function formHtml(q,label){
   return `<div class="sc-form" id="scform">
    <div class="sc-grid">
     <div class="field"><label class="lbl" for="sc-mat">Material type</label>
-     <input id="sc-mat" value="${esc(q.material)}" placeholder="e.g. perovskite, MOF, cathode">
-     <div class="mchips">${cats.map(c=>`<button type="button" class="chip" data-matc="${esc(c.name||c.category||"")}">${esc(c.name||c.category||"")}${c.n!=null?` · ${fint(c.n)}`:""}</button>`).join("")}</div></div>
+     <input id="sc-mat" value="${esc(q.material)}" placeholder="e.g. perovskite, MOF, cathode"></div>
     <div class="field"><label class="lbl" for="sc-app">Application</label>
      <input id="sc-app" value="${esc(q.application)}" placeholder="e.g. solar cell, CO2 capture, LED"></div>
     <div class="field"><label class="lbl" for="sc-metric">Figure of merit</label>
@@ -146,8 +145,10 @@ function formHtml(q,label){
      <p class="help" id="sc-exv">${ex}% · the rest goes to the safest bets</p></div>
     <div class="field"><span class="lbl">Deep pass <span class="opt">(optional)</span></span>
      <label class="sc-tog"><input type="checkbox" id="sc-deep" ${q.deep?"checked":""}> Check the abstracts with the LLM</label></div>
+    ${cats.length?`<div class="sc-cats"><span class="lbl">Material types in the index <span class="opt">(click to fill)</span></span>
+     <div class="mchips">${cats.map(c=>`<button type="button" class="chip" data-matc="${esc(c.name||c.category||"")}">${esc(c.name||c.category||"")}${c.n!=null?` · ${fint(c.n)}`:""}</button>`).join("")}</div></div>`:""}
    </div>
-   ${exs.length?`<div class="mchips">${exs.map(e=>`<button type="button" class="chip" data-exq="${esc(JSON.stringify(e))}">e.g. ${esc(e.label)}</button>`).join("")}</div>`:""}
+   ${exs.length?`<div class="mchips sc-exs"><span class="lbl">Try an example</span>${exs.map(e=>`<button type="button" class="chip" data-exq="${esc(JSON.stringify(e))}">e.g. ${esc(e.label)}</button>`).join("")}</div>`:""}
    <p class="err" id="sc-ferr"></p>
    <div><button class="btn cu big" type="button" id="sc-go" data-lab="${esc(label)}">${esc(label)}</button></div></div>`;
 }
@@ -218,7 +219,7 @@ function renderResult(){
     <p class="err" id="scerr"></p>
    </section>
    ${pastHtml()}</div>`;
-  bindForm();bindResult();renderBoard();legend();
+  bindForm();bindResult();renderBoard();scLegend();
 }
 function funnelHtml(r){
   let steps=r.funnel;
@@ -303,7 +304,7 @@ function syncExclude(fam,add){   // drops also land in the query's exclude words
   if(!add&&j>=0)ws.splice(j,1);
   i.value=ws.join(", ");
 }
-function legend(){
+function scLegend(){
   const el=$("#sc-legend");if(!el)return;
   el.innerHTML=COMP.map(k=>`<span><i style="background:var(--sc-${k})"></i>${k} <b class="num">${Math.round((SC.w[k]||0)*100)}</b></span>`).join("")
     +`<span class="meta">score = Σ weight × component</span>`;
@@ -324,7 +325,7 @@ function bindResult(){
     const fb=$("#sc-budget"),fe=$("#sc-explore");
     if(k==="budget"&&fb)fb.value=SC.budget;
     if(k==="explore"&&fe){fe.value=s.value;const ev=$("#sc-exv");if(ev)ev.textContent=`${s.value}% · the rest goes to the safest bets`}
-    legend();renderBoard()});
+    scLegend();renderBoard()});
   const tb=$("#sc-rows");
   tb.onclick=e=>{
     const xp=e.target.closest("[data-xp]");if(xp)return toggleFam(xp.dataset.xp);
