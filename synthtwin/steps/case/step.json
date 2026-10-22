@@ -1,0 +1,13 @@
+{
+  "id": "case",
+  "order": 6,
+  "icon": "chart",
+  "protocols": [
+    "design"
+  ],
+  "gate": true,
+  "name": "Your case",
+  "short": "Maps, sensitivities, best region",
+  "what_happens": "Your case is simulated: sensitivities, the 2-D map, the optimiser's proposals.",
+  "what_you_do": "Read the insights; ask for new ranges"
+}

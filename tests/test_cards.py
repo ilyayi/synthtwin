@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from synthtwin.cards import split_gold
+from synthtwin.lib.cards import split_gold
 
 from conftest import load_gold
 

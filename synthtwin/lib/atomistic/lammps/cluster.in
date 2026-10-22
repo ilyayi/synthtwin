@@ -1,0 +1,29 @@
+# spherical cut of the fcc lattice -> minimise -> anneal (T_ann) -> slow cool -> minimise
+include         ${tdir}/common.in
+lattice         fcc ${a0}
+region          box block -${L} ${L} -${L} ${L} -${L} ${L} units box
+create_box      1 box
+region          sph sphere 0 0 0 ${R} units box
+create_atoms    1 region sph
+mass            1 ${mass}
+pair_style      eam
+pair_coeff      1 1 ${pot}
+neighbor        1.0 bin
+neigh_modify    every 1 delay 0 check yes
+thermo          1000
+min_style       cg
+minimize        1e-10 1e-10 5000 50000
+print           "RESULT0 natoms $(atoms) pe_cut $(pe)"
+timestep        ${dt}
+velocity        all create ${T_ann} ${seed} mom yes rot yes dist gaussian
+fix             nvt all nvt temp ${T_ann} ${T_ann} 0.1
+fix             mom all momentum 100 linear 1 1 1 angular
+run             ${n_ann}
+unfix           nvt
+fix             nvt all nvt temp ${T_ann} 100.0 0.1
+run             ${n_cool}
+unfix           nvt
+unfix           mom
+minimize        1e-12 1e-12 20000 200000
+print           "RESULT natoms $(atoms) pe $(pe)"
+write_data      ${out}.data

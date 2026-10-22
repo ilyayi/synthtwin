@@ -1,0 +1,16 @@
+# Example robot profile: a generic liquid-handling platform with heating,
+# stirring, UV-Vis and DLS. Replace with the real one before running; stocks
+# are written as "<name> <conc> mM (<role>)" and pure solvents as "<name>".
+name: example-liquid-handler
+notes: >
+  Example profile for tests and the example run; not a real instrument. Stocks
+  are aqueous, at room temperature, dispensed by volume.
+operations: [dispense, heat, stir, age, transfer, measure_uvvis, measure_dls]
+reagents:
+  - "HAuCl4 25.0 mM (precursor)"
+  - "trisodium citrate 100.0 mM (reductant)"
+  - "water"
+temperature_C: [20.0, 100.0]
+volume_ml: [0.2, 50.0]
+instruments: ["UV-Vis spectrometer (300-900 nm)", "DLS (z-average, PDI)"]
+batch_size: 24

@@ -1,0 +1,5 @@
+# shared header: metal units, EAM (Foiles-Baskes-Daw 1986 "universal 3" funcfl)
+units           metal
+atom_style      atomic
+boundary        p p p
+atom_modify     map array

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import stat
 
-from synthtwin.vault import leak_scan, read_vault, write_vault
+from synthtwin.lib.vault import leak_scan, read_vault, write_vault
 
 HELD_OUT = [520.0, 470.5, 415.0, 395.0]  # case A measured, minus the anchor
 

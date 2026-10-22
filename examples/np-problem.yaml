@@ -1,0 +1,17 @@
+# Example nanoparticle problem: small citrate Au for UV-Vis / DLS checking.
+problem_id: au-citrate-8nm
+text: >
+  Colloidal gold nanoparticles around 8 nm with a narrow size distribution,
+  made by citrate or seeded citrate reduction in water, for UV-Vis and DLS
+  verification on the robot.
+material: Au
+methods: ["citrate reduction", "seeded growth", "borohydride reduction"]
+targets:
+  size_mean_nm: {value: 8.0}
+  size_sd_nm: {max: 1.5}
+knobs:
+  ratio_reductant_precursor: [1.0, 20.0]
+  temperature_C: [20.0, 110.0]
+  total_volume_ml: [5.0, 100.0]
+fixed:
+  pH: 5.5

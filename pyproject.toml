@@ -5,17 +5,41 @@ description = "Can a simulation predict a published catalysis experiment it has 
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2", "numpy", "scipy"]
+dependencies = ["pydantic>=2", "numpy", "scipy", "pyyaml"]
 
 [project.optional-dependencies]
-test = ["pytest"]
+data = ["pyarrow"]
+test = ["pytest", "pyyaml"]
+
+[project.scripts]
+synthtwin-recipes = "synthtwin.recipes.cli:main"
+synthtwin-design = "synthtwin.design.run:main"
+synthtwin-ui = "synthtwin.ui.server:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["synthtwin"]
+packages = ["synthtwin", "synthtwin.lib", "synthtwin.lib.np", "synthtwin.lib.atomistic",
+            "synthtwin.lib.recipes", "synthtwin.lib.design", "synthtwin.lib.screen", "synthtwin.lib.viz",
+            "synthtwin.core", "synthtwin.ui", "synthtwin.protocols", "synthtwin.agent", "synthtwin.steps",
+            "synthtwin.steps.goal", "synthtwin.steps.prior", "synthtwin.steps.stack", "synthtwin.steps.sample",
+            "synthtwin.steps.bench", "synthtwin.steps.case", "synthtwin.steps.recipe", "synthtwin.steps.robot"]
+
+[tool.setuptools.package-data]
+"synthtwin.lib.np" = ["data/*.csv"]
+"synthtwin.ui" = ["static/*.html", "static/*.css", "static/*.js", "static/fonts/*", "cases/*.json"]
+"synthtwin.lib.atomistic" = ["data/*.json", "data/*.csv", "lammps/*.in"]
+"synthtwin.protocols" = ["*.md"]
+"synthtwin.steps.goal" = ["step.json", "protocol.md", "panel.js", "panel.css"]
+"synthtwin.steps.prior" = ["step.json", "protocol.md", "panel.js", "panel.css"]
+"synthtwin.steps.stack" = ["step.json", "protocol.md", "panel.js", "panel.css"]
+"synthtwin.steps.sample" = ["step.json", "protocol.md", "panel.js", "panel.css"]
+"synthtwin.steps.bench" = ["step.json", "protocol.md", "panel.js", "panel.css"]
+"synthtwin.steps.case" = ["step.json", "protocol.md", "panel.js", "panel.css"]
+"synthtwin.steps.recipe" = ["step.json", "protocol.md", "panel.js", "panel.css"]
+"synthtwin.steps.robot" = ["step.json", "protocol.md", "panel.js", "panel.css"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

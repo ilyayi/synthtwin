@@ -1,0 +1,63 @@
+{
+  "case_id": "np-au-ph-b",
+  "paper_title": "pH dependence of Au nanoparticle size in citrate reduction",
+  "paper_url": "https://example.org/papers/au-ph",
+  "licence": "CC-BY-4.0",
+  "published": "2021-11-30",
+  "post_cutoff": false,
+  "material": "Au",
+  "method": "citrate reduction",
+  "sweep_variable": "pH",
+  "quantities": ["size_mean_nm", "lspr_nm"],
+  "points": [
+    {"label": "pH4", "value": 4.0,
+     "conditions": {"pH": 4.0, "ratio_reductant_precursor": 3.5, "temperature_C": 80.0, "time_min": 30.0, "total_volume_ml": 50.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.5},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 1.75},
+       {"role": "base", "name": "NaOH"},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "pH6", "value": 6.0,
+     "conditions": {"pH": 6.0, "ratio_reductant_precursor": 3.5, "temperature_C": 80.0, "time_min": 30.0, "total_volume_ml": 50.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.5},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 1.75},
+       {"role": "base", "name": "NaOH"},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "pH8", "value": 8.0,
+     "conditions": {"pH": 8.0, "ratio_reductant_precursor": 3.5, "temperature_C": 80.0, "time_min": 30.0, "total_volume_ml": 50.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.5},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 1.75},
+       {"role": "base", "name": "NaOH"},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "pH10", "value": 10.0,
+     "conditions": {"pH": 10.0, "ratio_reductant_precursor": 3.5, "temperature_C": 80.0, "time_min": 30.0, "total_volume_ml": 50.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.5},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 1.75},
+       {"role": "base", "name": "NaOH"},
+       {"role": "solvent", "name": "water"}
+     ]}
+  ],
+  "steps": [
+    "mix HAuCl4 and citrate at room temperature",
+    "adjust pH with NaOH",
+    "heat to 80 C and hold"
+  ],
+  "missing": ["pH measurement method"],
+  "measured": {
+    "pH4":  [{"quantity": "size_mean_nm", "value": 55.0, "unit": "nm", "unc": 4.0, "method": "TEM", "basis": "number", "source": "Fig. 1"},
+             {"quantity": "lspr_nm", "value": 535.0, "unit": "nm", "unc": 2.0, "method": "UV-Vis", "source": "Fig. 4"}],
+    "pH6":  [{"quantity": "size_mean_nm", "value": 32.0, "unit": "nm", "unc": 2.5, "method": "TEM", "basis": "number", "source": "Fig. 1"},
+             {"quantity": "lspr_nm", "value": 524.0, "unit": "nm", "unc": 2.0, "method": "UV-Vis", "source": "Fig. 4"}],
+    "pH8":  [{"quantity": "size_mean_nm", "value": 21.0, "unit": "nm", "unc": 1.5, "method": "TEM", "basis": "number", "source": "Fig. 1"},
+             {"quantity": "lspr_nm", "value": 521.0, "unit": "nm", "unc": 2.0, "method": "UV-Vis", "source": "Fig. 4"}],
+    "pH10": [{"quantity": "size_mean_nm", "value": 16.5, "unit": "nm", "unc": 1.2, "method": "TEM", "basis": "number", "source": "Fig. 1"},
+             {"quantity": "lspr_nm", "value": 519.0, "unit": "nm", "unc": 2.0, "method": "UV-Vis", "source": "Fig. 4"}]
+  },
+  "digitised_by": ["gita", "hugo"]
+}

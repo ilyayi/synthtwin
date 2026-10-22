@@ -1,0 +1,19 @@
+# Example problem: monodisperse ~15 nm Au nanoparticles by citrate reduction.
+# Sizes and tolerances are illustrative; numbers in the recipes and the stub
+# simulator are synthetic (see examples/README note in recipes.jsonl).
+problem_id: au-np-15nm
+text: >
+  Au nanoparticles with a 15 nm mean diameter and a size CV of at most 10 %,
+  made by citrate reduction on the robot.
+material: Au
+methods: ["citrate reduction"]
+targets:
+  size_mean_nm: {value: 15.0, weight: 1.0}
+  size_cv_pct: {max: 10.0, weight: 0.5}
+knobs:
+  ratio_reductant_precursor: [1.0, 7.0]
+  temperature_C: [70.0, 100.0]
+  conc_precursor_mM: [0.1, 1.0]
+fixed:
+  total_volume_ml: 20.0
+n_proposals: 3

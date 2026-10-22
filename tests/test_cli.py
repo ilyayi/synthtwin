@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from synthtwin.schemas import CaseCard, CasePrediction, CaseScore
+from synthtwin.core.schemas import CaseCard, CasePrediction, CaseScore
 from synthtwin import cli
 
 from conftest import GOLD_DIR

@@ -1,0 +1,15 @@
+# bulk fcc reference: cohesive energy per atom and lattice constant at 0 K
+include         ${tdir}/common.in
+lattice         fcc ${a_guess}
+region          box block 0 5 0 5 0 5
+create_box      1 box
+create_atoms    1 box
+mass            1 ${mass}
+pair_style      eam
+pair_coeff      1 1 ${pot}
+fix             br all box/relax iso 0.0 vmax 0.001
+min_style       cg
+minimize        1e-14 1e-14 20000 200000
+variable        ecoh equal pe/atoms
+variable        a0 equal lx/5
+print           "RESULT ecoh ${ecoh} a0 ${a0} natoms $(atoms)"

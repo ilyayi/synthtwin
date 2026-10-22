@@ -1,0 +1,13 @@
+{
+  "id": "robot",
+  "order": 8,
+  "icon": "robot",
+  "protocols": [
+    "handoff"
+  ],
+  "gate": false,
+  "name": "Robot",
+  "short": "Run it, feed results back",
+  "what_happens": "The recipe goes to the robotic platform; measurements come back as feedback.",
+  "what_you_do": "Enter the measurements"
+}

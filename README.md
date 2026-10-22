@@ -39,6 +39,81 @@ A light-off model is any function `params -> {"t50_K", "t50_K_low", "t50_K_high"
 "log10_site_scale_used"}`. When `params` holds `calibrate_t50_K`, the model fits its
 own `log10_site_scale` to that T50 and reports the value it used.
 
+## General sweeps
+
+The same machinery runs on any conditions -> outcomes sweep (first use:
+Au/Ag nanoparticles: size and size distribution vs ratios, pH, seed loading).
+A `SweepCase` card reveals one anchor point's measured **outcomes** (any number
+of quantities, e.g. `size_mean_nm` and `size_cv_pct`); a predictor returns a
+band for every quantity at every point, and each quantity is scored separately
+(spearman, mae, band_coverage, trend_ok as above).
+
+```
+python -m synthtwin.cli sweep build examples/sweep_gold cards vault
+python -m synthtwin.cli sweep baseline cards --predictor null -o null.jsonl
+python -m synthtwin.cli sweep baseline cards --predictor model \
+    --model mypkg.np:make_model -o base.jsonl
+python -m synthtwin.cli sweep score cards vault base.jsonl
+```
+
+A simulator is any class or factory `fn` with `predict(params) ->
+{quantity: {value, low, high, unit}}` and `calibrate(params, outcomes) ->
+extra params for predict`. It is calibrated on the anchor's outcomes and then
+predicts each point with that point's conditions. `synthtwin/lib/sweep.py` holds
+the split, leak scan (held-out values of all quantities, no unit shift),
+scoring and baselines.
+
+## Design
+
+The same machinery designs new experiments: a stated problem becomes robot-ready
+proposals through library search, calibration, optimisation and a novelty check
+(`docs/PIPELINE.md`).
+
+```
+pip install -e '.[test]'
+PYTHONPATH=tests/stubs synthtwin-design examples/problem.yaml \
+    --library examples/recipes.jsonl --robot examples/robot.yaml \
+    --predictor np_stub --out out
+```
+
+`--predictor` names a module with `predict(params) -> {quantity: {value, low,
+high, unit}}` and `calibrate(params, outcomes) -> dict` (`tests/stubs/np_stub.py`
+is the deterministic stub used in tests; `synthtwin.np.model` is the real
+nanoparticle simulator, see below). Recipe search and novelty come from `synthtwin.recipes`
+when installed; until then a built-in material+method filter and an exact-match
+novelty check are used and the report says so. The example library, robot and
+problem are synthetic illustrations, not real data.
+
+## Nanoparticle simulator
+
+`synthtwin/lib/np/` is a physics-based forward model for Au and Ag colloids. It
+needs only numpy and scipy. It covers citrate (Turkevich/Frens, including
+hot injection), NaBH4, seeded growth (including `n_injections`) and tannic-acid
+syntheses. It runs Arrhenius and pH-dependent reduction, nucleation, growth and
+coalescence, then Mie optics and DLS. Each quantity (`size_mean_nm`,
+`size_sd_nm`, `size_cv_pct`, `lspr_nm`, `lspr_fwhm_nm`, `dls_z_nm`, `dls_pdi`)
+is returned as a band from a seeded ensemble. One predict takes well under a
+second.
+
+```
+synthtwin-design examples/problem.yaml --library examples/recipes.jsonl \
+    --robot examples/robot.yaml --predictor synthtwin.np.model --out out
+python -m synthtwin.cli sweep baseline cards --predictor model \
+    --model synthtwin.np.model:make_model -o base.jsonl   # :ag for Ag sweeps
+```
+
+```python
+from synthtwin.np import model
+model.predict({"material": "Au", "method": "citrate", "conditions": {"temperature_C": 90},
+               "physics": {"coalescence_dmax_nm": 0, "capping_dG_eV": -0.4}})
+```
+
+`params["physics"]` overrides physical constants by name: `gamma_J_m2`,
+`Vm_m3_mol`, `coalescence_dmax_nm`, `coalescence_eff`, `capping_dG_eV`,
+`ligand_shell_nm`. These are the entry point for atomistic results. Every
+default and its source is in `synthtwin/lib/np/params.py`. The trend tests and
+optics checks are in `docs/reports/np-sim.md`.
+
 ## Data
 
 - `examples/gold/` contains three **synthetic** cases with made-up numbers. They are
@@ -53,12 +128,25 @@ own `log10_site_scale` to that T50 and reports the value it used.
 
 ## Layout
 
+Everything about one pipeline step lives in one folder (`synthtwin/steps/<step>/`: its step.json
+registry entry, its protocol, its LLM schema, its handlers, its UI panel); the science several
+steps share is in `synthtwin/lib/`, the orchestrator and shared machinery in `synthtwin/core/`.
+See docs/PIPELINE.md "Repo layout" for the full map.
+
 ```
-synthtwin/schemas.py    case card, vault entry, prediction and score formats
-synthtwin/cards.py      gold case -> (card, vault entry); anchor = median sweep point
-synthtwin/vault.py      sealed storage and leak scanning
-synthtwin/score.py      scoring
-synthtwin/baseline.py   null and calibrated-model predictors
+synthtwin/steps/        one folder per UI step, in order: goal, prior, stack, sample, bench,
+                        case, recipe, robot (step.json + protocol.md + schema.py + run.py +
+                        panel.js/panel.css)
+synthtwin/lib/          the shared science: np/ (colloid forward model), atomistic/, recipes/
+                        (recipe library: LeMat-Synth ingest, search, novelty — CLI:
+                        synthtwin-recipes), design/ (problem -> optimise -> robot proposals —
+                        CLI: synthtwin-design), screen/, cards (gold case -> card + vault),
+                        vault (sealed storage, leak scanning), score, baseline, sweep
+synthtwin/core/         engine (the study agent orchestrator), llm, schemas (card, vault,
+                        prediction and score formats), runner, catalog, systems, toolbox
+synthtwin/protocols/    the cross-cutting protocols + the versioned protocol registry
+synthtwin/agent/        import shims to the pre-steps paths
+synthtwin/ui/           the study server and the static shell
 synthtwin/cli.py        build / baseline / score
 tools/merge_readings.py two blinded readings -> gold case
 ```

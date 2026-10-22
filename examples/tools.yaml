@@ -1,0 +1,28 @@
+# Engines the SynthTwin builder agent may use when it builds a simulator for a
+# new material system. Copy this file, point the commands at your install and
+# pass it with `--tools path/to/tools.yaml`. Every entry is shown to the builder
+# verbatim: `use` says what the tool is for, `run` how to call it, `notes` any limits.
+tools:
+  - name: lammps
+    use: classical / reactive MD (LJ, EAM, Tersoff, OPLS/GAFF via your own data file, ReaxFF)
+    run: "lmp -in in.lammps -log log.lammps   # add your GPU package flags, e.g. -k on g 1 -sf kk"
+    notes: run long jobs through simjob.py (the builder is told how) so they survive its session
+  - name: quantum_espresso
+    use: plane-wave DFT (adsorption, formation and reaction energies, barriers with NEB, band gaps)
+    run: "mpirun -np 4 pw.x -i scf.in > scf.out"
+    notes: "pseudopotentials: /path/to/pseudo; small cells, gamma point or coarse k-mesh first"
+  - name: packmol
+    use: initial packing of molecules for MD
+    run: "packmol < pack.inp"
+  - name: gromacs
+    use: classical MD of molecular, polymer and solvent systems; free energies, diffusion, viscosity
+    run: "gmx mdrun -deffnm md"
+  - name: deepmd
+    use: machine-learned potential trained on DFT data, then MD with LAMMPS pair_style deepmd
+    run: "dp train in.json && dp freeze -o model.pb && dp test -m model.pb -s val"
+  - name: python (numpy/scipy)
+    use: kinetic Monte Carlo, phase-field, population balance, continuum PDEs, fits and surrogates
+    run: "python script.py"
+rules:
+  - stop GPU work if a GPU passes 83 C (check with nvidia-smi)
+  - at most one GPU job per GPU; install software only into the tool area (--toolbox)

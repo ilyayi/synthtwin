@@ -1,0 +1,14 @@
+# low-index slab surface energy at 0 K: gamma = (E_slab - N*ecoh)/(2A)
+include         ${tdir}/common.in
+lattice         fcc ${a0} orient x ${ox1} ${ox2} ${ox3} orient y ${oy1} ${oy2} ${oy3} orient z ${oz1} ${oz2} ${oz3}
+region          box block 0 ${Lx} 0 ${Ly} -20 $(v_zslab+20) units box
+create_box      1 box
+region          slab block INF INF INF INF -0.01 $(v_zslab-0.01) units box
+create_atoms    1 region slab
+mass            1 ${mass}
+pair_style      eam
+pair_coeff      1 1 ${pot}
+min_style       cg
+minimize        1e-14 1e-14 20000 200000
+variable        gam equal (pe-atoms*${ecoh})/(2*lx*ly)*16.0218
+print           "RESULT natoms $(atoms) pe $(pe) area $(lx*ly) gamma_Jm2 ${gam}"

@@ -1,0 +1,68 @@
+{
+  "case_id": "np-au-citrate-a",
+  "paper_title": "Au nanoparticles by citrate reduction: effect of the citrate-to-gold ratio",
+  "paper_url": "https://example.org/papers/au-citrate-ratio",
+  "licence": "CC-BY-4.0",
+  "published": "2020-05-12",
+  "post_cutoff": false,
+  "material": "Au",
+  "method": "citrate reduction",
+  "sweep_variable": "ratio_reductant_precursor",
+  "quantities": ["size_mean_nm", "size_cv_pct"],
+  "points": [
+    {"label": "r1", "value": 1.0,
+     "conditions": {"ratio_reductant_precursor": 1.0, "temperature_C": 100.0, "time_min": 20.0, "total_volume_ml": 100.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.25},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 0.25},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "r2p5", "value": 2.5,
+     "conditions": {"ratio_reductant_precursor": 2.5, "temperature_C": 100.0, "time_min": 20.0, "total_volume_ml": 100.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.25},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 0.625},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "r5", "value": 5.0,
+     "conditions": {"ratio_reductant_precursor": 5.0, "temperature_C": 100.0, "time_min": 20.0, "total_volume_ml": 100.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.25},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 1.25},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "r10", "value": 10.0,
+     "conditions": {"ratio_reductant_precursor": 10.0, "temperature_C": 100.0, "time_min": 20.0, "total_volume_ml": 100.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.25},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 2.5},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "r20", "value": 20.0,
+     "conditions": {"ratio_reductant_precursor": 20.0, "temperature_C": 100.0, "time_min": 20.0, "total_volume_ml": 100.0, "stirring_rpm": 300.0},
+     "reagents": [
+       {"role": "precursor", "name": "HAuCl4", "conc_mM": 0.25},
+       {"role": "reductant", "name": "trisodium citrate", "conc_mM": 5.0},
+       {"role": "solvent", "name": "water"}
+     ]}
+  ],
+  "steps": [
+    "boil the HAuCl4 solution under stirring",
+    "add the trisodium citrate stock in one shot",
+    "hold at reflux, then cool to room temperature"
+  ],
+  "missing": ["citrate addition rate"],
+  "measured": {
+    "r1":   [{"quantity": "size_mean_nm", "value": 42.0, "unit": "nm", "unc": 3.0, "method": "TEM", "basis": "number", "source": "Fig. 2"},
+             {"quantity": "size_cv_pct", "value": 28.0, "unit": "%", "unc": 2.0, "method": "TEM", "source": "Fig. 2"}],
+    "r2p5": [{"quantity": "size_mean_nm", "value": 28.5, "unit": "nm", "unc": 2.0, "method": "TEM", "basis": "number", "source": "Fig. 2"},
+             {"quantity": "size_cv_pct", "value": 23.0, "unit": "%", "unc": 1.5, "method": "TEM", "source": "Fig. 2"}],
+    "r5":   [{"quantity": "size_mean_nm", "value": 18.0, "unit": "nm", "unc": 1.5, "method": "TEM", "basis": "number", "source": "Fig. 2"},
+             {"quantity": "size_cv_pct", "value": 19.0, "unit": "%", "unc": 1.0, "method": "TEM", "source": "Fig. 2"}],
+    "r10":  [{"quantity": "size_mean_nm", "value": 12.5, "unit": "nm", "unc": 1.0, "method": "TEM", "basis": "number", "source": "Fig. 3"},
+             {"quantity": "size_cv_pct", "value": 16.0, "unit": "%", "unc": 1.0, "method": "TEM", "source": "Fig. 3"}],
+    "r20":  [{"quantity": "size_mean_nm", "value": 9.0, "unit": "nm", "unc": 0.8, "method": "TEM", "basis": "number", "source": "Fig. 3"},
+             {"quantity": "size_cv_pct", "value": 14.0, "unit": "%", "unc": 1.0, "method": "TEM", "source": "Fig. 3"}]
+  },
+  "digitised_by": ["erin", "farid"]
+}

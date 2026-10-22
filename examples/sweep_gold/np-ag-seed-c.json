@@ -1,0 +1,56 @@
+{
+  "case_id": "np-ag-seed-c",
+  "paper_title": "Seeded growth of Ag nanoparticles: seed-to-silver ratio",
+  "paper_url": "https://example.org/papers/ag-seed",
+  "licence": "CC-BY-4.0",
+  "published": "2022-07-08",
+  "post_cutoff": false,
+  "material": "Ag",
+  "method": "seeded growth",
+  "sweep_variable": "ratio_seed_precursor",
+  "quantities": ["size_mean_nm", "dls_z_nm"],
+  "points": [
+    {"label": "s0.005", "value": 0.005,
+     "conditions": {"ratio_seed_precursor": 0.005, "temperature_C": 25.0, "time_min": 60.0, "total_volume_ml": 20.0, "stirring_rpm": 600.0},
+     "reagents": [
+       {"role": "precursor", "name": "AgNO3", "conc_mM": 1.0},
+       {"role": "reductant", "name": "L-ascorbic acid", "conc_mM": 2.0},
+       {"role": "capping", "name": "PVP"},
+       {"role": "seed", "name": "Ag seeds"},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "s0.010", "value": 0.01,
+     "conditions": {"ratio_seed_precursor": 0.01, "temperature_C": 25.0, "time_min": 60.0, "total_volume_ml": 20.0, "stirring_rpm": 600.0},
+     "reagents": [
+       {"role": "precursor", "name": "AgNO3", "conc_mM": 1.0},
+       {"role": "reductant", "name": "L-ascorbic acid", "conc_mM": 2.0},
+       {"role": "capping", "name": "PVP"},
+       {"role": "seed", "name": "Ag seeds"},
+       {"role": "solvent", "name": "water"}
+     ]},
+    {"label": "s0.020", "value": 0.02,
+     "conditions": {"ratio_seed_precursor": 0.02, "temperature_C": 25.0, "time_min": 60.0, "total_volume_ml": 20.0, "stirring_rpm": 600.0},
+     "reagents": [
+       {"role": "precursor", "name": "AgNO3", "conc_mM": 1.0},
+       {"role": "reductant", "name": "L-ascorbic acid", "conc_mM": 2.0},
+       {"role": "capping", "name": "PVP"},
+       {"role": "seed", "name": "Ag seeds"},
+       {"role": "solvent", "name": "water"}
+     ]}
+  ],
+  "steps": [
+    "add AgNO3 to the seed solution under stirring",
+    "add ascorbic acid to start growth",
+    "age, then measure UV-Vis and DLS"
+  ],
+  "missing": ["seed particle concentration"],
+  "measured": {
+    "s0.005": [{"quantity": "size_mean_nm", "value": 45.0, "unit": "nm", "unc": 3.0, "method": "TEM", "basis": "number", "source": "Fig. 5"},
+               {"quantity": "dls_z_nm", "value": 52.0, "unit": "nm", "unc": 4.0, "method": "DLS", "source": "Fig. 6"}],
+    "s0.010": [{"quantity": "size_mean_nm", "value": 30.0, "unit": "nm", "unc": 2.0, "method": "TEM", "basis": "number", "source": "Fig. 5"},
+               {"quantity": "dls_z_nm", "value": 35.0, "unit": "nm", "unc": 3.0, "method": "DLS", "source": "Fig. 6"}],
+    "s0.020": [{"quantity": "size_mean_nm", "value": 22.0, "unit": "nm", "unc": 1.5, "method": "TEM", "basis": "number", "source": "Fig. 5"},
+               {"quantity": "dls_z_nm", "value": 26.0, "unit": "nm", "unc": 2.0, "method": "DLS", "source": "Fig. 6"}]
+  },
+  "digitised_by": ["iris", "jordi"]
+}

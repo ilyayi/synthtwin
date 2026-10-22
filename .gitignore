@@ -1,6 +1,6 @@
 __pycache__/
 *.egg-info/
-.venv*/
+.venv*
 .pytest_cache/
 # real cases stay out of the repo: gold answers and vaults are never published
 /gold/
@@ -8,3 +8,6 @@ __pycache__/
 /cards/
 *.pdf
 /review/
+/data/
+build/
+.shots/

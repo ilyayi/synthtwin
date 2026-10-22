@@ -1,0 +1,11 @@
+# as coalesce.in, but both particles are the annealed+minimised cluster from
+# cluster.in (robustness check against the rough as-cut surfaces)
+include         ${tdir}/common.in
+read_data       ${data}
+change_box      all x final -${Lx} ${Lx} y final -${L} ${L} z final -${L} ${L} units box
+displace_atoms  all move -${xc} 0 0 units box
+group           A type 1
+read_data       ${data} add append shift ${xc} 0 0
+group           B subtract all A
+displace_atoms  B rotate ${xc} 0 0 ${ax} ${ay} ${az} ${ang} units box
+include         ${tdir}/coal_run.in

@@ -1,0 +1,13 @@
+{
+  "id": "sample",
+  "order": 4,
+  "icon": "chart",
+  "protocols": [
+    "validate"
+  ],
+  "gate": true,
+  "name": "Benchmark sample",
+  "short": "Studies to test the stack on",
+  "what_happens": "It picks the related studies the stack must predict before it is trusted.",
+  "what_you_do": "Choose the benchmark sample"
+}

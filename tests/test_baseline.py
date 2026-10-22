@@ -7,8 +7,8 @@ import math
 
 import pytest
 
-from synthtwin.baseline import baseline_predict, null_predict
-from synthtwin.score import score
+from synthtwin.lib.baseline import baseline_predict, null_predict
+from synthtwin.lib.score import score
 
 
 def stub_lightoff(params):

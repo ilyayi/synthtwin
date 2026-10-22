@@ -1,0 +1,14 @@
+{
+  "id": "bench",
+  "order": 5,
+  "icon": "chart",
+  "protocols": [
+    "build-and-qa",
+    "validate"
+  ],
+  "gate": true,
+  "name": "Benchmark",
+  "short": "Does the stack predict them?",
+  "what_happens": "The stack predicts the sample; blind studies are scored against sealed data.",
+  "what_you_do": "Approve simulating your case"
+}

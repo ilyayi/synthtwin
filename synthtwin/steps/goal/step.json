@@ -1,0 +1,13 @@
+{
+  "id": "goal",
+  "order": 1,
+  "icon": "chart",
+  "protocols": [
+    "onboard-problem"
+  ],
+  "gate": true,
+  "name": "Goal",
+  "short": "Agree a measurable target",
+  "what_happens": "The agent turns your problem into a measurable goal: targets, knobs, fixed conditions.",
+  "what_you_do": "Confirm or edit the targets"
+}

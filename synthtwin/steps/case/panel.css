@@ -1,0 +1,2 @@
+/* the case step's panel styles (the insights list; the charts are shared) */
+.insights{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--ink)}

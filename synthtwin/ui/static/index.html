@@ -1,0 +1,294 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SynthTwin · Studies</title>
+<link rel="stylesheet" href="/static/theme.css">
+<link rel="stylesheet" href="/static/agent.css">
+<link rel="stylesheet" href="/static/steps.css">
+<link rel="stylesheet" href="/static/screen.css">
+<style>
+/* page layer: layout only; tokens, buttons, cards, pills, step cards live in theme.css */
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+.topnav{justify-content:space-between}
+.topnav nav{display:flex;gap:18px;align-items:center}
+.topnav nav a{color:var(--ink2);font:500 14px/1 var(--sans)}
+.hero{padding:56px 0 18px}
+.hero h1{font-size:clamp(40px,5.6vw,78px);max-width:16ch;margin:14px 0 18px}
+.hero h1 em{color:var(--cu2)}
+section{padding:34px 0}
+section>h3{margin:0 0 6px}
+.secnote{margin:0 0 16px}
+
+/* pipeline flow */
+.flow{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;position:relative;padding-bottom:58px}
+.fnode{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 12px;border-radius:14px;min-height:118px;
+  background:linear-gradient(180deg,var(--panel),var(--bg2));box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .2s,transform .2s}
+.fnode:hover{box-shadow:inset 0 0 0 1px var(--ink3);transform:translateY(-1px)}
+.fnode:focus-visible{outline:2px solid var(--cu);outline-offset:2px}
+.fnode .fid{font:600 11px/1 var(--mono);letter-spacing:.14em;color:var(--cu)}
+.fnode b{font:600 15px/1.25 var(--sans)}
+.fnode .fs{font-size:12.5px;line-height:1.4;color:var(--ink3)}
+.fnode .fst{margin-top:auto;font:600 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.fnode:not(:last-of-type)::after{content:"";position:absolute;right:-9px;top:50%;width:8px;height:2px;background:var(--line2)}
+.fnode.sel{box-shadow:inset 0 0 0 2px var(--cu)}
+.fnode.done{box-shadow:inset 0 0 0 1px rgba(79,211,154,.45)}.fnode.done .fst{color:#6fe3b0}
+.fnode.running{box-shadow:inset 0 0 0 1px rgba(216,137,79,.6),0 0 0 3px var(--cu-dim)}.fnode.running .fst{color:var(--cu2)}
+.fnode.warn{box-shadow:inset 0 0 0 1px rgba(242,193,78,.5)}.fnode.warn .fst{color:var(--warn)}
+.fnode.failed{box-shadow:inset 0 0 0 1px rgba(255,143,122,.55)}.fnode.failed .fst{color:var(--bad)}
+.fnode.awaiting_user{box-shadow:inset 0 0 0 1px rgba(98,198,242,.55)}.fnode.awaiting_user .fst{color:var(--cy)}
+.loop{position:absolute;left:calc(12.5% + 4px);right:calc(6.25% - 2px);bottom:8px;height:40px;pointer-events:none}
+.loop svg{width:100%;height:100%;overflow:visible}
+.loop .lbl2{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);font:500 11.5px/1 var(--mono);color:var(--cy);background:var(--bg);padding:2px 8px;white-space:nowrap}
+.gate{position:absolute;left:calc(37.5% + 2px);top:-10px;font:600 10px/1 var(--mono);color:var(--cy);letter-spacing:.06em}
+.proto{margin-top:6px}
+.proto .card{padding:18px 20px}
+.proto ul{margin:8px 0 0;padding-left:18px;color:var(--ink2);font-size:14.5px;display:flex;flex-direction:column;gap:4px}
+@media(max-width:980px){.flow{grid-template-columns:repeat(4,minmax(0,1fr));padding-bottom:12px}.loop,.fnode::after{display:none}.gate{display:none}}
+@media(max-width:520px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* study cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.scard{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:16px;
+  background:linear-gradient(180deg,var(--panel),var(--bg2));box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .2s,transform .2s}
+.scard:hover{box-shadow:inset 0 0 0 1px var(--ink3);transform:translateY(-1px)}
+.scard:focus-visible{outline:2px solid var(--cu);outline-offset:2px}
+.scard h4{margin:0;font:600 17px/1.3 var(--sans)}
+.scard p{margin:0;font-size:14px;color:var(--ink2)}
+.scard .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.strip{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.strip i{height:6px;border-radius:3px;background:rgba(255,255,255,.08)}
+.strip i.done{background:var(--ok)}.strip i.running{background:var(--cu)}.strip i.warn{background:var(--warn)}
+.strip i.failed{background:var(--bad)}.strip i.awaiting_user{background:var(--cy)}.strip i.skipped{background:rgba(255,255,255,.18)}
+.striplab{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;font:500 9.5px/1 var(--mono);color:var(--mute)}
+.empty{color:var(--ink3);font-size:14px}
+
+/* new study wizard */
+.wiz{border-radius:20px;padding:22px;background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:inset 0 0 0 1px var(--line2)}
+.wiz .pane{margin-top:22px;display:flex;flex-direction:column;gap:16px}
+.wiz .pane h2{font-size:clamp(28px,3vw,40px)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.qrow{display:grid;grid-template-columns:28px minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.qrow input[type=number]{height:38px;padding:0 10px;width:100%}
+.qrow.head{font:600 11px/1 var(--mono);color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;border-top:0}
+.wnav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+textarea{width:100%;min-height:110px;padding:12px;font-size:15px}
+.mchips{display:flex;flex-wrap:wrap;gap:8px}
+.err{margin-top:8px}
+
+/* study page */
+.shead{padding:40px 0 10px}
+.shead h2{margin:10px 0 12px;font-size:clamp(30px,3.6vw,52px)}
+.back{font:500 14px/1 var(--sans);color:var(--ink3)}
+.dec{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.dec li{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:4px 14px;font-size:14px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.025)}
+.dec .q{color:var(--ink3)}.dec .a{color:var(--ink);font-weight:600}.dec .w{grid-column:2;color:var(--ink3);font-size:13px}
+@media(max-width:640px){.dec li{grid-template-columns:1fr}.dec .w{grid-column:1}}
+.tbl{overflow:auto;margin-top:12px;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);max-height:420px}
+.tbl table{width:100%;font-size:13px}
+.tbl .tt{font:600 11.5px/1.3 var(--mono);color:var(--ink3);padding:10px 10px 6px;letter-spacing:.03em}
+.logl{font:400 12px/1.6 var(--mono);color:var(--ink3);margin-top:10px}
+.pstep.warn .node{background:rgba(242,193,78,.1);color:var(--warn);box-shadow:inset 0 0 0 1px rgba(242,193,78,.45)}
+.pstep.warn .pbody{box-shadow:inset 0 0 0 1px rgba(242,193,78,.35)}
+.sw.warn{background:rgba(242,193,78,.12);color:#f6cf6e;box-shadow:inset 0 0 0 1px rgba(242,193,78,.42)}
+.node .nid{font:600 13px/1 var(--mono)}
+.props{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:14px}
+.prop{padding:16px;border-radius:14px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px var(--line2);display:flex;flex-direction:column;gap:8px;font-size:14px}
+.prop h4{margin:0;font:600 15px/1.3 var(--mono)}
+.prop .bands{display:flex;flex-direction:column;gap:3px;font:500 12.5px/1.4 var(--mono);color:var(--ink2)}
+.prop .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.prop input[type=text],.prop input[type=number]{height:34px;padding:0 10px;width:100%}
+.prop ol,.prop ul{margin:4px 0 0;padding-left:18px;color:var(--ink2);font-size:13px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px;align-items:center;font:500 12.5px var(--mono);color:var(--ink3)}
+.kv{display:flex;flex-wrap:wrap;gap:4px}
+</style></head>
+<body class="navd">
+<header class="topnav"><a class="logo" href="#/"><span class="orb"></span>SynthTwin</a>
+  <nav><a href="#/pipeline">Pipeline</a><a href="#/cases">Case studies</a><a href="#/mine">Your studies</a><a href="#/screen">Auto-search</a><a class="btn cu small" href="#/new">Start a study</a></nav></header>
+<main id="app"></main>
+<script src="/static/common.js"></script>
+<script src="/static/steps.js"></script>
+<script src="/static/agent.js"></script>
+<script src="/static/screen.js"></script>
+<script>
+const WORD={pending:'waiting',running:'running',done:'done',warn:'done, caveat',failed:'stopped',awaiting_user:'needs you',skipped:'skipped',queued:'queued',complete:'complete'};
+const PCLS={pending:'queued',running:'running',done:'done',warn:'warn',failed:'attention',awaiting_user:'you',skipped:'queued'};
+let STAGES=[],OPT={},timer=null,W=null,flowSel=null;
+
+/* ---------- pipeline flow (shared: home shows protocols, study page shows status) */
+function flow(stages,statusById,onclick){
+  return `<div class="flow">${stages.map(s=>{const st=statusById?.[s.id];
+    return `<button class="fnode ${st||''} ${flowSel===s.id&&!statusById?'sel':''}" data-id="${s.id}" type="button">
+      <span class="fid">${s.id}</span><b>${esc(s.name)}</b><span class="fs">${esc(s.short)}</span>
+      <span class="fst">${st?esc(WORD[st]||st):'&nbsp;'}</span></button>`}).join('')}
+    <span class="gate">↑ MD/DFT gate</span>
+    <div class="loop"><svg viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M100,0 V30 H0 V0" fill="none" stroke="rgba(98,198,242,.55)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-dasharray="4 4"/></svg>
+      <span class="lbl2">A8 results → new recipes (A2) + new held-out cases (A3)</span></div></div>`}
+
+function stripHtml(st){return `<div class="strip">${STAGES.map(s=>`<i class="${(st.find(x=>x.id===s.id)||{}).status||''}" title="${s.id} ${s.name}"></i>`).join('')}</div>
+  <div class="striplab">${STAGES.map(s=>`<span>${s.id}</span>`).join('')}</div>`}
+
+function card(s){if(s.kind==='agent')return agentCard(s);const st=s.kind==='case'?'case study':(WORD[s.status]||s.status);
+  return `<button class="scard" type="button" onclick="location.hash='#/s/${esc(s.id)}'">
+   <div class="row"><span class="status ${s.status==='complete'?'complete':s.status==='running'||s.status==='queued'?'running':s.status==='failed'?'failed':s.status==='awaiting_user'?'awaiting_user':''}">${esc(st)}</span>
+   ${s.material?`<span class="pill">${esc(s.material)}</span>`:''}${(s.tags||[]).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
+   <h4>${esc(s.title)}</h4><p>${esc(s.subtitle||s.text||'')}</p>${stripHtml(s.stages||[])}
+   <span class="meta">${s.kind==='case'?'curated · read the decisions at each stage':new Date(s.created*1000).toLocaleString()}</span></button>`}
+
+/* ---------- home */
+async function home(anchor){
+  const L=await api('/api/studies');
+  $('#app').innerHTML=`<div class="wrap">
+  <div class="hero"><p class="eyebrow">SynthTwin · simulation-guided synthesis</p>
+   <h1>From published recipes to <em>robot-ready</em> experiments.</h1>
+   <p class="lede">Describe your problem and an agent works it through with you: a measurable goal, what related studies swept and found, a simulation stack with time and insight, a benchmark on known results, your case simulated, and a recipe for the robot. Underneath, every study follows the same eight stages. Past results are held out as tests, the simulator is validated against them before it is trusted, MD/DFT is used only where it passes a gate, and a person approves every experiment before the robot runs it.</p>
+   <p style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn cu big" href="#/new">Start a new study</a><a class="btn ghost big" href="#/cases">See the case studies</a></p></div>
+  <section id="new"><h3>Start a new study</h3>${AG.meta&&AG.meta.enabled?`${agentStartHtml()}
+   <details class="more" style="margin-top:16px"><summary>Or fill the fixed pipeline form (A1 to A8, no conversation)</summary><div class="inner"><p class="help secnote">Four steps. The study runs A1 to A6 on its own and stops at A7 for your approval.</p><div id="wizard"></div></div></details>`
+   :`<p class="help secnote">Four steps. The study runs A1 to A6 on its own and stops at A7 for your approval.</p><div id="wizard"></div>`}</section>
+  <section id="pipeline"><h3>The pipeline</h3><p class="help secnote">Click a stage to read its protocol: the rules every study follows there.</p>
+   <div id="flowbox">${flow(STAGES)}</div><div class="proto" id="proto"></div></section>
+  <section id="cases"><h3>Case studies</h3><p class="help secnote">Curated studies that went through the pipeline, with the decision taken at each stage and why.</p>
+   <div class="cards">${L.cases.map(card).join('')||'<p class="empty">No case studies installed.</p>'}</div></section>
+  <section id="mine"><h3>Your studies</h3><p class="help secnote">Newest first. Open one to follow it stage by stage.</p>
+   <div class="cards">${L.studies.map(card).join('')||'<p class="empty">No studies yet. Start one below.</p>'}</div></section>
+  </div>`;
+  bindFlow();showProto(flowSel||'A1');wizard();bindAgentStart();
+  if(anchor){const el=document.getElementById(anchor);if(el)el.scrollIntoView({behavior:'smooth'})}
+  if(L.studies.some(s=>['running','queued'].includes(s.status))){clearTimeout(timer);timer=setTimeout(()=>{if(!location.hash.startsWith('#/s/')&&!W.dirty)home()},3000)}
+}
+function bindFlow(){document.querySelectorAll('#flowbox .fnode').forEach(b=>b.onclick=()=>{flowSel=b.dataset.id;$('#flowbox').innerHTML=flow(STAGES);bindFlow();showProto(flowSel)})}
+function showProto(id){const s=STAGES.find(x=>x.id===id);flowSel=id;
+  document.querySelectorAll('#flowbox .fnode').forEach(b=>b.classList.toggle('sel',b.dataset.id===id));
+  $('#proto').innerHTML=`<div class="card"><p class="eyebrow">${s.id} · ${esc(s.name)}</p><p style="margin:10px 0 0;color:var(--ink)">${esc(s.what)}</p>
+   <ul>${s.protocol.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>`}
+
+/* ---------- new study wizard */
+const STEPS=['Question','Targets','Knobs','Review'];
+function wizard(prefill){
+  if(!W||prefill){const p=prefill||{};W={i:0,dirty:false,title:p.title||'',text:p.text||'',material:p.material||'Au',methods:p.methods||['citrate reduction'],
+    targets:p.targets||{size_mean_nm:{value:12},size_sd_nm:{max:1.5}},
+    knobs:p.knobs||{ratio_reductant_precursor:[1,10],temperature_C:[60,100]},fixed:p.fixed||{conc_precursor_mM:0.25},n:p.n_proposals||3}}
+  const w=W;if(!$('#wizard'))return;
+  $('#wizard').innerHTML=`<div class="wiz"><ol class="stepper">${STEPS.map((s,i)=>`<li class="${i<w.i?'done':i===w.i?'cur':''}"><button type="button" ${i>w.i?'disabled':''} data-i="${i}"><span class="n">${i+1}</span><span class="t">${s}</span></button></li>`).join('')}</ol>
+   <div class="pane">${[paneQ,paneT,paneK,paneR][w.i]()}</div>
+   <p class="err" id="werr"></p>
+   <div class="wnav"><button class="btn ghost" type="button" id="wprev" ${w.i?'':'hidden'}>Back</button><span></span>
+    ${w.i<3?'<button class="btn cu" type="button" id="wnext">Next</button>':'<button class="btn cu big" type="button" id="wgo">Start the study</button>'}</div></div>`;
+  document.querySelectorAll('.stepper button').forEach(b=>b.onclick=()=>{read();w.i=+b.dataset.i;wizard()});
+  $('#wprev')&&($('#wprev').onclick=()=>{read();w.i--;wizard()});
+  $('#wnext')&&($('#wnext').onclick=()=>{read();const e=check(w.i);if(e){$('#werr').textContent=e;return}w.i++;wizard()});
+  $('#wgo')&&($('#wgo').onclick=launch);
+  $('#wizard').oninput=()=>{w.dirty=true};
+}
+function paneQ(){const w=W;return `<h2>What do you want to make?</h2>
+  <p class="lede">Describe it the way you'd brief a colleague. Pick the material and the routes the robot may use.</p>
+  <div class="field"><label class="lbl" for="wtitle">Study name</label><input id="wtitle" value="${esc(w.title)}" placeholder="e.g. 12 nm citrate gold for DLS checks"></div>
+  <div class="field"><label class="lbl" for="wtext">In your words</label><textarea id="wtext" placeholder="Colloidal gold around 12 nm with a narrow size distribution, made by citrate reduction in water…">${esc(w.text)}</textarea></div>
+  <div class="field"><span class="lbl">Material</span><div class="mchips">${OPT.materials.map(m=>`<button type="button" class="chip ${m===w.material?'on':''}" data-mat="${m}">${m}</button>`).join('')}</div></div>
+  <div class="field"><span class="lbl">Allowed methods</span><div class="mchips">${OPT.methods.map(m=>`<label class="chip ${w.methods.includes(m)?'on':''}"><input type="checkbox" hidden data-meth="${esc(m)}" ${w.methods.includes(m)?'checked':''}>${esc(m)}</label>`).join('')}</div>
+   <p class="help">The first method is the one the optimiser designs for.</p></div>`}
+function paneT(){const w=W;return `<h2>What must the result meet?</h2>
+  <p class="lede">Every target must be measurable on the robot (UV-Vis and DLS). Give an aim value, or a min/max, with units.</p>
+  <div><div class="qrow head"><span></span><span>quantity</span><span>aim</span><span>min</span><span>max</span></div>
+  ${Object.entries(OPT.quantities).map(([q,lab])=>{const t=w.targets[q];return `<div class="qrow"><input type="checkbox" data-tq="${q}" ${t?'checked':''}><span>${esc(lab)}<br><span class="meta">${q}</span></span>
+   ${['value','min','max'].map(k=>`<input type="number" step="any" data-tk="${q}:${k}" value="${t&&t[k]!=null?t[k]:''}">`).join('')}</div>`}).join('')}</div>`}
+function paneK(){const w=W;return `<h2>What may the optimiser change?</h2>
+  <p class="lede">Tick the knobs to search and give each a range. Untick to hold one fixed at a value instead.</p>
+  <div><div class="qrow head"><span></span><span>condition</span><span>low</span><span>high</span><span>or fixed at</span></div>
+  ${Object.entries(OPT.knobs).map(([k,d])=>{const r=w.knobs[k],f=w.fixed[k];return `<div class="qrow"><input type="checkbox" data-kq="${k}" ${r?'checked':''}><span class="mono">${k}</span>
+   <input type="number" step="any" data-kk="${k}:0" value="${(r||d)[0]}"><input type="number" step="any" data-kk="${k}:1" value="${(r||d)[1]}"><input type="number" step="any" data-kf="${k}" value="${f??''}" placeholder="—"></div>`}).join('')}</div>
+  <div class="field" style="max-width:220px"><label class="lbl" for="wn">Proposals to return</label><input id="wn" type="number" min="1" max="6" value="${w.n}"></div>`}
+function paneR(){const w=W;const tg=Object.entries(w.targets).map(([q,t])=>`${q} ${t.value!=null?'= '+t.value:''}${t.min!=null?' ≥ '+t.min:''}${t.max!=null?' ≤ '+t.max:''}`).join('; ');
+  return `<h2>Review and start</h2><div class="order"><h3>Your study</h3><dl>
+   <dt>Name</dt><dd>${esc(w.title||'(untitled)')}</dd><dt>Material</dt><dd>${esc(w.material)}</dd><dt>Methods</dt><dd>${esc(w.methods.join(', '))}</dd>
+   <dt>Targets</dt><dd class="mono">${esc(tg)}</dd><dt>Knobs</dt><dd class="mono">${esc(Object.entries(w.knobs).map(([k,r])=>`${k} [${r[0]}, ${r[1]}]`).join('; '))}</dd>
+   <dt>Fixed</dt><dd class="mono">${esc(Object.entries(w.fixed).map(([k,v])=>`${k}=${v}`).join('; ')||'—')}</dd><dt>Proposals</dt><dd>${w.n}</dd></dl>
+   <div class="total"><span class="help" style="margin:0">A1–A6 run automatically (the design step takes a few minutes). The study stops at A7 for your approval.</span></div></div>`}
+function read(){const w=W;const v=id=>{const e=$(id);return e?e.value:null};
+  if($('#wtitle')){w.title=v('#wtitle');w.text=v('#wtext');w.methods=[...document.querySelectorAll('[data-meth]')].filter(e=>e.checked).map(e=>e.dataset.meth)}
+  if($('[data-tq]')){const t={};document.querySelectorAll('[data-tq]').forEach(c=>{if(!c.checked)return;const q=c.dataset.tq,o={};
+    ['value','min','max'].forEach(k=>{const x=$(`[data-tk="${q}:${k}"]`).value;if(x!=='')o[k]=+x});t[q]=o});w.targets=t}
+  if($('[data-kq]')){const kn={},fx={};document.querySelectorAll('[data-kq]').forEach(c=>{const k=c.dataset.kq;
+    const f=$(`[data-kf="${k}"]`).value;if(c.checked)kn[k]=[+$(`[data-kk="${k}:0"]`).value,+$(`[data-kk="${k}:1"]`).value];else if(f!=='')fx[k]=+f});w.knobs=kn;w.fixed=fx;w.n=+v('#wn')||3}}
+function check(i){const w=W;
+  if(i===0&&!w.methods.length)return 'Pick at least one method.';
+  if(i===1){if(!Object.keys(w.targets).length)return 'Tick at least one target.';for(const[q,t]of Object.entries(w.targets))if(!Object.keys(t).length)return `Give ${q} an aim, min or max.`}
+  if(i===2){if(!Object.keys(w.knobs).length)return 'Tick at least one knob.';for(const[k,r]of Object.entries(w.knobs))if(!(r[0]<r[1]))return `${k}: low must be below high.`}
+  return ''}
+document.addEventListener('click',e=>{const m=e.target.closest('[data-mat]');if(m){W.material=m.dataset.mat;read();wizard()}
+  const l=e.target.closest('label.chip');if(l){setTimeout(()=>{read();wizard()},0)}});
+async function launch(){read();const w=W;const b=$('#wgo');b.disabled=true;b.innerHTML='<span class="spin"></span>Starting';
+  try{const r=await post('/api/studies',{title:w.title,from_case:w.from_case,problem:{text:w.text||w.title,material:w.material,methods:w.methods,targets:w.targets,knobs:w.knobs,fixed:w.fixed,n_proposals:w.n}});
+    W=null;location.hash='#/s/'+r.id}catch(e){$('#werr').textContent='Could not start: '+e.message;b.disabled=false;b.textContent='Start the study'}}
+
+/* ---------- study page */
+async function study(id){
+  let s;try{s=await api('/api/studies/'+encodeURIComponent(id))}catch(e){$('#app').innerHTML=`<div class="wrap shead"><a class="back" href="#/">← All studies</a><h2>Not found</h2></div>`;return}
+  if(s.kind==='agent')return agentStudy(id,s);AG.sid=null;
+  const byId=Object.fromEntries(s.stages.map(x=>[x.id,x.status]));const p=s.problem||{};
+  const keepOpen=[...document.querySelectorAll('details[data-k]')].filter(d=>d.open).map(d=>d.dataset.k);
+  const typing=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.prop');
+  if(typing&&['awaiting_user'].includes(s.status)){return}
+  $('#app').innerHTML=`<div class="wrap">
+  <div class="shead"><a class="back" href="#/">← All studies</a>
+   <p class="eyebrow" style="margin-top:18px">${s.kind==='case'?'Case study':'Your study'} · ${esc(p.material||'')}</p>
+   <h2>${esc(s.title)}</h2>
+   <p style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="sw ${PCLS[s.status]||s.status}">${esc(WORD[s.status]||s.status)}</span>
+   ${(s.tags||[]).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</p>
+   ${s.subtitle?`<p class="lede" style="margin-top:12px">${esc(s.subtitle)}</p>`:''}
+   ${p.text?`<p class="help" style="margin-top:10px">${esc(p.text)}</p>`:''}
+   ${s.kind==='case'&&p.knobs?`<p style="margin-top:16px"><button class="btn ghost" type="button" id="rerun">Run this problem as a new study</button></p>`:''}
+  </div>
+  <section style="padding-top:10px"><div id="flowbox">${flow(STAGES,byId)}</div></section>
+  ${s.headline?`<div class="callout ${s.headline.kind||''}" style="margin-bottom:18px">${s.headline.html||esc(s.headline.text)}</div>`:''}
+  <ol class="pstack">${s.stages.map(x=>stageHtml(s,x)).join('')}</ol></div>`;
+  document.querySelectorAll('#flowbox .fnode').forEach(b=>b.onclick=()=>document.getElementById('st-'+b.dataset.id).scrollIntoView({behavior:'smooth',block:'start'}));
+  keepOpen.forEach(k=>{const d=$(`details[data-k="${k}"]`);if(d)d.open=true});
+  $('#rerun')&&($('#rerun').onclick=()=>{wizard({...p,title:s.title+' (re-run)'});W.from_case=s.id;location.hash='#/new'});
+  bindProps(s);
+  clearTimeout(timer);if(['running','queued'].includes(s.status))timer=setTimeout(()=>{if(location.hash==='#/s/'+id)study(id)},1500)}
+
+function stageHtml(s,x){const g=STAGES.find(t=>t.id===x.id);const cls=PCLS[x.status]||'queued';
+  return `<li class="pstep ${cls}" id="st-${x.id}" style="scroll-margin-top:80px"><div class="node"><span class="nid">${x.id}</span></div><div class="pbody">
+   <div class="ptop"><span class="pname">${esc(g.name)}</span><span class="sw ${x.status==='warn'?'warn':cls}">${x.status==='running'?'<span class="spin"></span>':''}${esc(WORD[x.status]||x.status)}</span></div>
+   <p>${esc(x.summary||(x.status==='pending'?g.what:''))}</p>
+   ${x.decisions?.length?`<ul class="dec">${x.decisions.map(d=>`<li><span class="q">${esc(d.q)}</span><span class="a">${esc(d.a)}</span>${d.why?`<span class="w">${esc(d.why)}</span>`:''}</li>`).join('')}</ul>`:''}
+   ${(x.tables||[]).map(tableHtml).join('')}
+   ${x.id==='A7'&&s.proposals?.length?propsHtml(s):''}
+   ${x.id==='A8'&&x.status!=='pending'&&s.proposals?.some(q=>q.decision?.decision==='approve')?resultsHtml(s):''}
+   ${x.log?.length?`<div class="logl">${x.log.map(esc).join('<br>')}</div>`:''}
+   ${x.error?`<details class="more" data-k="err-${x.id}"><summary>Error detail</summary><div class="inner"><pre>${esc(x.error)}</pre></div></details>`:''}
+   <details class="more" data-k="proto-${x.id}"><summary>General protocol for ${x.id}</summary><div class="inner"><ul style="margin:0;padding-left:18px">${g.protocol.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div></details>
+  </div></li>`}
+function tableHtml(t){return `<div class="tbl"><div class="tt">${esc(t.title)}</div><table><thead><tr>${t.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+  <tbody>${t.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+function bandTxt(b){return `${(+b.value).toFixed(2)} [${(+b.low).toFixed(2)}, ${(+b.high).toFixed(2)}] ${b.unit||''}`}
+function propsHtml(s){const ro=s.kind==='case';return `<div class="props">${s.proposals.map(p=>{const d=p.decision;return `<div class="prop" data-pid="${esc(p.id)}">
+  <h4>${esc(p.id)}</h4><div class="row" style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill ${p.label==='exploratory'?'upill':''}">${esc(p.label)}</span><span class="pill">novelty: ${esc(p.novelty?.coverage==='thin'?'thin coverage':p.novelty?.novel?'novel':'known')}</span></div>
+  <div class="kv">${Object.entries(p.conditions).map(([k,v])=>`<span class="pill">${esc(k)}=${(+v).toPrecision(3)}</span>`).join('')}</div>
+  <div class="bands">${Object.entries(p.predicted).map(([q,b])=>`<span>${esc(q)}: ${esc(bandTxt(b))}</span>`).join('')}</div>
+  <details class="more" data-k="steps-${esc(p.id)}"><summary>Robot steps, controls, risks</summary><div class="inner">
+   <b>Steps</b><ol>${(p.steps||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ol><b>Measure</b><ul>${(p.measurements||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+   <b>Controls</b><ul>${(p.controls||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul><b>Risks</b><ul>${(p.risks||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+   <p class="help">Nearest known recipe: ${esc(p.novelty?.nearest_recipe_id||'—')} ${p.novelty?.reason?'· '+esc(p.novelty.reason):''}</p></div></details>
+  ${d?`<p><span class="sw ${d.decision==='approve'?'done':'attention'}">${d.decision==='approve'?'approved':'rejected'}</span> <span class="help">${esc(d.note||'')}</span></p>`
+   :ro?'':`<input type="text" placeholder="Note (optional): why approve or reject" data-note><div class="acts"><button class="btn cu small" type="button" data-dec="approve">Approve for the robot</button><button class="btn danger small" type="button" data-dec="reject">Reject</button></div>`}
+  </div>`}).join('')}</div>`}
+function resultsHtml(s){const tq=Object.keys(s.problem.targets||{}).concat(['lspr_nm','dls_z_nm']).filter((q,i,a)=>a.indexOf(q)===i);
+  return `<div class="props">${s.proposals.filter(p=>p.decision?.decision==='approve').map(p=>`<div class="prop" data-rid="${esc(p.id)}"><h4>${esc(p.id)} · robot result</h4>
+   ${p.measured?`<div class="bands">${Object.entries(p.measured).map(([q,v])=>`<span>${esc(q)} = ${v}</span>`).join('')}</div>`:s.kind==='case'?'<p class="help">not measured yet</p>':
+   `${tq.map(q=>`<div class="mrow"><span>${esc(q)}</span><input type="number" step="any" data-m="${q}"></div>`).join('')}<div class="acts"><button class="btn cu small" type="button" data-res>Record result</button></div>`}</div>`).join('')}</div>`}
+function bindProps(s){
+  document.querySelectorAll('[data-dec]').forEach(b=>b.onclick=async()=>{const box=b.closest('.prop');b.disabled=true;
+    try{await post(`/api/studies/${s.id}/decide`,{proposal_id:box.dataset.pid,decision:b.dataset.dec,note:box.querySelector('[data-note]').value});study(s.id)}catch(e){alertBox(box,e)}});
+  document.querySelectorAll('[data-res]').forEach(b=>b.onclick=async()=>{const box=b.closest('.prop');const m={};box.querySelectorAll('[data-m]').forEach(i=>{if(i.value!=='')m[i.dataset.m]=+i.value});
+    try{await post(`/api/studies/${s.id}/result`,{proposal_id:box.dataset.rid,measured:m});study(s.id)}catch(e){alertBox(box,e)}})}
+function alertBox(box,e){let p=box.querySelector('.err');if(!p){p=document.createElement('p');p.className='err';box.appendChild(p)}p.textContent=e.message}
+
+/* ---------- router */
+async function route(){clearTimeout(timer);clearTimeout(AG.poll);clearTimeout(SC.poll);const h=location.hash||'#/';
+  if(h.startsWith('#/s/')){const[id,v]=h.slice(4).split('/');AG.want=v||null;return study(decodeURIComponent(id))}
+  if(h==='#/screen'||h.startsWith('#/screen/')){return SC.page(h.startsWith('#/screen/')?decodeURIComponent(h.slice(9)):null)}
+  const a={'#/pipeline':'pipeline','#/cases':'cases','#/mine':'mine','#/new':'new'}[h];
+  if(a&&$('#'+a)){document.getElementById(a).scrollIntoView({behavior:'smooth'});if(a==='new')wizard();return}
+  await home(a)}
+(async()=>{[STAGES,OPT]=[(await api('/api/pipeline')).stages,await api('/api/options')];try{await agentMeta()}catch(e){AG.meta={enabled:false}}window.addEventListener('hashchange',route);route()})();
+</script></body></html>

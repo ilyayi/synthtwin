@@ -1,0 +1,14 @@
+# two spheres (B rotated -> random misorientation), equilibrated apart beyond the
+# EAM cutoff, then brought within range; NVT (implicit heat bath) production
+include         ${tdir}/common.in
+lattice         fcc ${a0}
+region          box block -${Lx} ${Lx} -${L} ${L} -${L} ${L} units box
+create_box      1 box
+region          s1 sphere -${xc} 0 0 ${R} units box
+create_atoms    1 region s1
+group           A region s1
+region          s2 sphere ${xc} 0 0 ${R} units box
+create_atoms    1 region s2
+group           B subtract all A
+displace_atoms  B rotate ${xc} 0 0 ${ax} ${ay} ${az} ${ang} units box
+include         ${tdir}/coal_run.in

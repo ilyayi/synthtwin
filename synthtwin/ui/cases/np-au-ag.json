@@ -1,0 +1,421 @@
+{
+ "id": "np-au-ag",
+ "kind": "case",
+ "status": "running",
+ "title": "Au/Ag nanoparticle synthesis",
+ "subtitle": "Size and size distribution from reaction conditions, checked against 7 published sweeps; MD/DFT used where the A4.2 gate says it pays off.",
+ "tags": [
+  "nanoparticles",
+  "Turkevich",
+  "seeded growth",
+  "MD/DFT gate"
+ ],
+ "created": 0,
+ "problem": {
+  "problem_id": "au-citrate-8nm",
+  "material": "Au",
+  "text": "Colloidal gold nanoparticles around 8 nm with a narrow size distribution, made by citrate or seeded citrate reduction in water, for UV-Vis and DLS verification on the robot.",
+  "methods": [
+   "citrate reduction",
+   "seeded growth",
+   "borohydride reduction"
+  ],
+  "targets": {
+   "size_mean_nm": {
+    "value": 8.0
+   },
+   "size_sd_nm": {
+    "max": 1.5
+   }
+  },
+  "knobs": {
+   "ratio_reductant_precursor": [
+    1.0,
+    20.0
+   ],
+   "temperature_C": [
+    20.0,
+    110.0
+   ],
+   "total_volume_ml": [
+    5.0,
+    100.0
+   ]
+  },
+  "fixed": {
+   "pH": 5.5
+  },
+  "n_proposals": 3
+ },
+ "stages": [
+  {
+   "id": "A1",
+   "status": "done",
+   "summary": "Au near 8 nm, SD <= 1.5 nm; knobs: reductant:precursor ratio, temperature, volume",
+   "decisions": [
+    {
+     "q": "Inputs",
+     "a": "reaction conditions",
+     "why": "precursor, reductant, capping, ratios, concentrations, T, pH/base, seeds, injections, time"
+    },
+    {
+     "q": "Outputs",
+     "a": "size mean, SD/CV, LSPR, DLS z-average/PDI",
+     "why": "all measurable on the robot by UV-Vis and DLS"
+    },
+    {
+     "q": "Valid problem?",
+     "a": "yes",
+     "why": "targets are known quantities; knobs are canonical keys"
+    }
+   ],
+   "tables": [],
+   "log": []
+  },
+  {
+   "id": "A2",
+   "status": "warn",
+   "summary": "260 recipes from the LeMat-Synth dump; 68 in the Au/Ag family; only 11 report a size",
+   "decisions": [
+    {
+     "q": "Can the library calibrate size models?",
+     "a": "no, too thin",
+     "why": "11 sized Au/Ag recipes across mixed methods; calibration must come from family recipes with outcomes"
+    },
+    {
+     "q": "Where does validation come from?",
+     "a": "gold sweeps (A3)",
+     "why": "one-factor sweeps from open papers, blinded extraction"
+    }
+   ],
+   "tables": [],
+   "log": []
+  },
+  {
+   "id": "A3",
+   "status": "done",
+   "summary": "7 one-factor sweeps from 4 open papers; 43 rows; two blinded readers agreed on all 139 shared numbers",
+   "decisions": [
+    {
+     "q": "Extraction",
+     "a": "two blinded readers, merged",
+     "why": "values only one reader gave were dropped; real answers stay private"
+    },
+    {
+     "q": "Anchor",
+     "a": "median point per case",
+     "why": "the predictor sees one point; the rest are sealed"
+    },
+    {
+     "q": "Caveats",
+     "a": "recorded per case",
+     "why": "Piella growth samples are one continuing batch (correlated); Piella pH/TA at 100 C; Dong sizes are UV-Vis (Haiss) estimates; Li NaOH sizes are histogram estimates"
+    },
+    {
+     "q": "Fresh cases for later",
+     "a": "Wuithschick 2015, Dong 2020 ratio series, Babaei 2018, Zabetakis 2012",
+     "why": "kept untouched as a held-out set for any model revised after seeing the scores"
+    }
+   ],
+   "tables": [
+    {
+     "title": "Gold cases (no values shown)",
+     "columns": [
+      "case",
+      "paper",
+      "chemistry",
+      "swept factor",
+      "quantities"
+     ],
+     "rows": [
+      [
+       "np-au-piella-growth",
+       "Piella 2016",
+       "seeded growth",
+       "growth cycles (k)",
+       "size, SD, LSPR"
+      ],
+      [
+       "np-au-piella-ph",
+       "Piella 2016",
+       "citrate + tannic",
+       "pH",
+       "size"
+      ],
+      [
+       "np-au-piella-ta",
+       "Piella 2016",
+       "citrate + tannic",
+       "tannic acid amount",
+       "size"
+      ],
+      [
+       "np-au-li-conc",
+       "Li 2011",
+       "citrate",
+       "[HAuCl4]",
+       "size, CV"
+      ],
+      [
+       "np-au-li-naoh",
+       "Li 2011",
+       "citrate",
+       "NaOH",
+       "size"
+      ],
+      [
+       "np-ag-laspina-ta",
+       "La Spina 2020",
+       "Ag citrate + tannic",
+       "tannic acid",
+       "size, SD, LSPR"
+      ],
+      [
+       "np-au-dong-temp",
+       "Dong 2020",
+       "citrate",
+       "temperature",
+       "size (UV-Vis)"
+      ]
+     ]
+    }
+   ],
+   "log": []
+  },
+  {
+   "id": "A4",
+   "status": "done",
+   "summary": "Continuum NP model (synthtwin.np): reduction kinetics, nucleation, growth, coalescence, capping; Mie optics; DLS. 0.1-0.5 s per prediction",
+   "decisions": [
+    {
+     "q": "Tier",
+     "a": "continuum model",
+     "why": "fast enough for the optimiser; every parameter has a source or is marked assumed"
+    },
+    {
+     "q": "Which parameters pass the MD/DFT gate?",
+     "a": "surface energy, coalescence, capping binding",
+     "why": "sensitivity at default Au citrate (12.1 nm): coalescence off -> 6.4 nm; capping -0.6 eV -> 5.3 nm; gamma 0.4 -> 11.8 nm"
+    },
+    {
+     "q": "Reduction kinetics atomistically?",
+     "a": "no",
+     "why": "no reliable reactive potential; ab initio MD in water far over budget; calibrated instead"
+    },
+    {
+     "q": "ML potentials?",
+     "a": "not used",
+     "why": "EAM is adequate for bare Au/Ag; no ligand-water training data within the deadline"
+    },
+    {
+     "q": "Compute",
+     "a": "about 12.5 GPU-hours + 12 CPU core-hours, 2.6 h wall",
+     "why": "LAMMPS EAM on 5 GPUs at low priority; no new DFT (literature values)"
+    },
+    {
+     "q": "What the MD found",
+     "a": "gamma size-independent (2-10 nm, within 1.3 %); every contact fuses",
+     "why": "196 Au/Ag dimer runs (1.5-8 nm, 300-550 K): full rounding within 2 ns only near 1.5 nm; Ag behaves like Au ~1 nm larger"
+    },
+    {
+     "q": "Physical vs default values",
+     "a": "physical gamma ~1.25 J/m2 vs default 0.3; coalescence_eff ~0.75 vs 0.02",
+     "why": "the defaults stand in for burst nucleation and borohydride stabilisation rather than real surface energy and collision efficiency"
+    }
+   ],
+   "tables": [
+    {
+     "title": "Atomistic values used by run B (Au, citrate, 348 K; +/- 1 sigma)",
+     "columns": [
+      "parameter",
+      "value",
+      "source",
+      "trust"
+     ],
+     "rows": [
+      [
+       "gamma_J_m2",
+       "1.24 +/- 0.12",
+       "Tyson-Miller 1977 + RPA/SCAN DFT, T and water corrections, MD size factor 1.00",
+       "moderate"
+      ],
+      [
+       "Vm_m3_mol",
+       "1.021e-5",
+       "bulk density",
+       "strong"
+      ],
+      [
+       "coalescence_dmax_nm",
+       "3.0 +/- 1.5",
+       "EAM MD dimer rounding (lower bound; ns timescale)",
+       "weak"
+      ],
+      [
+       "coalescence_eff",
+       "0.75 +/- 0.25",
+       "DLVO/Fuchs for bare nm clusters",
+       "moderate"
+      ],
+      [
+       "capping_dG_eV",
+       "-0.35 +/- 0.08",
+       "Dinkel isotherms, published DFT adsorption energies",
+       "moderate"
+      ],
+      [
+       "ligand_shell_nm",
+       "1.5 +/- 0.7",
+       "Park 2014 and other measured shells",
+       "moderate"
+      ]
+     ]
+    },
+    {
+     "title": "A4.2 decisions",
+     "columns": [
+      "aspect",
+      "parameter",
+      "sensitive",
+      "constrained by data",
+      "method",
+      "why"
+     ],
+     "rows": [
+      [
+       "surface energy (ripening, critical nucleus)",
+       "gamma_J_m2",
+       "yes",
+       "no (confounded with nucleation prefactor)",
+       "literature DFT + EAM MD",
+       "minutes per cluster; MD gives the size trend slabs miss"
+      ],
+      [
+       "coalescence of small particles",
+       "coalescence_dmax_nm, coalescence_eff",
+       "yes",
+       "no",
+       "EAM MD of particle pairs vs size and T",
+       "vacuum MD ignores ligands: an upper bound, reported as such"
+      ],
+      [
+       "capping-agent binding",
+       "capping_dG_eV",
+       "yes",
+       "partly (pH, TA series)",
+       "literature DFT",
+       "published PBE/vdW adsorption energies; new ligand+water DFT would take days"
+      ],
+      [
+       "ligand shell (DLS)",
+       "ligand_shell_nm",
+       "small",
+       "no",
+       "literature",
+       "-"
+      ],
+      [
+       "reduction kinetics",
+       "rate constants",
+       "yes",
+       "yes (anchor + library)",
+       "not atomistic",
+       "no reactive potential"
+      ]
+     ]
+    }
+   ],
+   "log": []
+  },
+  {
+   "id": "A5",
+   "status": "warn",
+   "summary": "Scores are private (computed against the vault); run the UI with --scores to see them",
+   "decisions": [
+    {
+     "q": "Verdict rule",
+     "a": "B helps if it beats A on MAE or trend_ok, or B0 beats A0",
+     "why": "B0 vs A0 is the cleaner test of physics content"
+    },
+    {
+     "q": "Validated family",
+     "a": "trend_ok and MAE below null",
+     "why": "otherwise design candidates are labelled exploratory"
+    }
+   ],
+   "tables": [
+    {
+     "title": "Ablation design",
+     "columns": [
+      "run",
+      "parameters",
+      "anchor calibration"
+     ],
+     "rows": [
+      [
+       "null",
+       "-",
+       "anchor value +/-30 %"
+      ],
+      [
+       "A",
+       "continuum defaults",
+       "yes"
+      ],
+      [
+       "B",
+       "atomistic/literature physics",
+       "yes"
+      ],
+      [
+       "A0 / B0",
+       "as A / B",
+       "none (pure prediction)"
+      ]
+     ]
+    }
+   ],
+   "log": []
+  },
+  {
+   "id": "A6",
+   "status": "pending",
+   "summary": "Run this problem as a new study to see the live design step (calibrate, optimise, novelty, proposals)",
+   "decisions": [
+    {
+     "q": "Earlier CLI run",
+     "a": "3 proposals in 3.6 min",
+     "why": "best: ratio 1.6, 93 C, 0.40 mM -> predicted 16.6 nm, CV 9.2 % (outside the 8 nm target: exploratory)"
+    }
+   ],
+   "tables": [],
+   "log": []
+  },
+  {
+   "id": "A7",
+   "status": "pending",
+   "summary": "A person approves each proposal (report: sources, calibration, validated vs exploratory, nearest recipe, assumptions)",
+   "decisions": [],
+   "tables": [],
+   "log": []
+  },
+  {
+   "id": "A8",
+   "status": "skipped",
+   "summary": "Robot loop deferred: solution synthesis then UV-Vis and DLS; results return as recipes and new held-out sweeps",
+   "decisions": [
+    {
+     "q": "Robot specifics",
+     "a": "deferred",
+     "why": "instrument drivers and plate formats come later"
+    }
+   ],
+   "tables": [],
+   "log": []
+  }
+ ],
+ "headline": {
+  "kind": "info",
+  "text": "Scores are private for now: A5 shows the ablation design; the verdicts appear when the UI runs with the private score files."
+ }
+}

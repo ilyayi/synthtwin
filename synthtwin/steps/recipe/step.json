@@ -1,0 +1,13 @@
+{
+  "id": "recipe",
+  "order": 7,
+  "icon": "chart",
+  "protocols": [
+    "design"
+  ],
+  "gate": true,
+  "name": "Recipe",
+  "short": "What to run, and why",
+  "what_happens": "The best proposal is written up as a lab recipe with checks and risks.",
+  "what_you_do": "Pick the recipe for the robot"
+}

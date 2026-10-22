@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from synthtwin.schemas import (
+from synthtwin.core.schemas import (
     CaseCard,
     CasePrediction,
     Catalyst,
@@ -13,7 +13,7 @@ from synthtwin.schemas import (
     SweepPoint,
     VaultEntry,
 )
-from synthtwin.score import score
+from synthtwin.lib.score import score
 
 # case A measured: 0.1Pt 520.0, 0.5Pt 470.5, 1.0Pt 440.0 (anchor),
 #                   2.0Pt 415.0, 5.0Pt 395.0

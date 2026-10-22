@@ -1,0 +1,16 @@
+# heating ramp of a relaxed cluster; PE(T) jump -> melting temperature
+include         ${tdir}/common.in
+read_data       ${data}
+mass            1 ${mass}
+pair_style      eam
+pair_coeff      1 1 ${pot}
+neighbor        1.0 bin
+timestep        ${dt}
+velocity        all create ${T0} ${seed} mom yes rot yes dist gaussian
+fix             nvt all nvt temp ${T0} ${T1} 0.1
+fix             mom all momentum 100 linear 1 1 1 angular
+variable        tt equal temp
+variable        pea equal pe/atoms
+fix             ave all ave/time 10 ${nave} ${nevery} v_tt v_pea file ${out}.melt.txt
+thermo          10000
+run             ${nrun}

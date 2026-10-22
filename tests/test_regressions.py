@@ -2,9 +2,9 @@
 incomplete predictions never score as trend_ok."""
 import stat
 
-from synthtwin.schemas import CasePrediction, PointPrediction
-from synthtwin.score import score as score_fn
-from synthtwin.vault import leak_scan, write_vault
+from synthtwin.core.schemas import CasePrediction, PointPrediction
+from synthtwin.lib.score import score as score_fn
+from synthtwin.lib.vault import leak_scan, write_vault
 
 
 def test_leak_scan_integer_at_sentence_end(tmp_path):
