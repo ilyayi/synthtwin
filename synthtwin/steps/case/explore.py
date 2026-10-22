@@ -166,6 +166,7 @@ def optimise(problem_d: dict, module: str, base: dict, robot_path: str, library:
     for p in props:
         c = p.candidate
         out.append({"id": p.proposal_id, "method": c.method, "conditions": c.conditions, "score": c.score,
+                    "policy": c.label,
                     "predicted": {q: {"value": b.value, "low": max(b.low, 0.0), "high": b.high, "unit": b.unit}
                                   for q, b in c.predicted.items()},
                     "novelty": p.novelty.model_dump(), "steps": p.steps, "measurements": p.measurements,

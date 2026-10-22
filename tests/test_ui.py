@@ -64,6 +64,10 @@ def test_static_and_meta(base) -> None:
     assert [s["id"] for s in p["stages"]] == STAGE_IDS
     _, v = call(url + "/api/viz")                       # no --viz: off, but the route answers
     assert v == {"enabled": False, "items": []}
+    _, b = call(url + "/api/bench6040")                 # the committed 60/40 benchmark
+    assert b["meta"]["licence"].startswith("MIT") and "AgNP" in b["datasets"]
+    c = b["datasets"]["AgNP"]["curves"]["60/40"]
+    assert len(c["mean"]) == len(c["ns"]) and c["p5"][0] <= c["mean"][0] <= c["p95"][0]
     _, lst = call(url + "/api/studies")
     assert any(c["id"] == "np-au-ag" for c in lst["cases"])   # shipped case study
     assert call(url + "/api/studies/NOT_AN_ID")[0] == 404

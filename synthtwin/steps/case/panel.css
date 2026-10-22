@@ -1,2 +1,9 @@
 /* the case step's panel styles (the insights list; the charts are shared) */
 .insights{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--ink)}
+
+/* the "Why 60/40" benchmark card */
+.bx-card{margin-top:18px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2)}
+.bx-card svg text{font-size:12px}
+.bx-stats{display:flex;flex-wrap:wrap;gap:8px 22px;margin:10px 0 8px}
+.bx-stat b{font-family:var(--mono);font-size:15px;margin-right:6px;color:var(--ink)}
+.bx-stat{color:var(--ink2);font-size:12px}

@@ -230,6 +230,7 @@ class Candidate(Model):
     reagents: list[Reagent] = Field(default_factory=list)
     predicted: dict[str, Band]   # outcome quantity -> band (incl. lspr_nm, dls_z_nm for checking)
     score: float                 # objective value (lower is better)
+    label: str | None = None     # "exploit" | "explore" (the 60/40 policy; None = old data)
     in_validated_region: bool
     notes: list[str] = Field(default_factory=list)
 

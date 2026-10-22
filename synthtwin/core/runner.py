@@ -440,6 +440,7 @@ def a6_design(rec: Recorder, cfg: Config, ctx: dict) -> None:
                 for q, b in c.predicted.items()}
         out.append({"id": p.proposal_id, "method": c.method,
                     "conditions": c.conditions, "predicted": pred, "score": c.score,
+                    "policy": c.label,
                     "label": label if ctx.get("validated") is not None else (
                         "validated range" if c.in_validated_region else "exploratory"),
                     "novelty": p.novelty.model_dump(), "steps": p.steps, "measurements": p.measurements,

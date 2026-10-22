@@ -21,11 +21,13 @@ from scipy.optimize import minimize
 from scipy.stats import qmc
 
 from synthtwin.core.schemas import Band, Candidate, Problem
+from synthtwin.lib.design import policy
 from synthtwin.lib.design.calibrate import Calibration
 
 WIDE_BAND_WEIGHT = 0.05        # the "small term for wide bands"
 N_REFINE = 6                   # LHS starts refined with L-BFGS-B
 DIVERSITY_MIN_DISTANCE = 0.12  # min knob-space distance (unit cube) between candidates
+EXPLORE_SHARE = 0.4            # default explore fraction of returned candidates
 
 
 def run(
@@ -35,6 +37,7 @@ def run(
     seed: int = 0,
     n_eval: int = 80,
     validated: dict[str, dict[str, list[float]]] | None = None,
+    explore: float = EXPLORE_SHARE,
 ) -> list[Candidate]:
     """-> up to 3 x problem.n_proposals diverse Candidates, best first."""
     names = sorted(problem.knobs)
@@ -81,6 +84,7 @@ def run(
     ]
     wanted = 3 * problem.n_proposals
     picked = _select_diverse([s[0] for s in scored], lo, hi, wanted)
+    labels = _policy_labels(problem, scored, picked, lo, hi, explore)
 
     candidates: list[Candidate] = []
     for i in picked:
@@ -97,6 +101,7 @@ def run(
                 conditions=conditions,
                 predicted={q: _widen(b, calibration.band_factor) for q, b in raw.items()},
                 score=round(score, 6),
+                label=labels.get(i),
                 in_validated_region=ok,
                 notes=notes,
             )
@@ -146,6 +151,40 @@ def _best_starts(
         seen.append((score, x))
     seen.sort(key=lambda t: t[0])
     return [x for _, x in seen[:n]]
+
+
+def _policy_labels(
+    problem: Problem,
+    scored: list[tuple[np.ndarray, float, dict[str, Any]]],
+    picked: list[int],
+    lo: np.ndarray,
+    hi: np.ndarray,
+    explore: float,
+) -> dict[int, str]:
+    """Split the returned candidates ~60/40 with policy.pick: posterior mean = the
+    score, posterior sd = the mean relative band half-width over the targets.
+    The benchmark in lib/design/bench6040.py is what fixes the default mix."""
+    if len(picked) < 2 or explore <= 0.0:
+        return {i: "exploit" for i in picked}
+    if explore >= 1.0:
+        return {i: "explore" for i in picked}
+    mu = np.array([scored[i][1] for i in picked])
+    sd = np.array([_mean_band_spread(problem, scored[i][2]) for i in picked])
+    unit = np.array([(scored[i][0] - lo) / (hi - lo) for i in picked])
+    idx, labels = policy.pick(mu, sd, len(picked), explore=explore, x=unit)
+    return {picked[j]: lab for j, lab in zip(idx, labels)}
+
+
+def _mean_band_spread(problem: Problem, raw: dict[str, Any]) -> float:
+    """Mean relative band half-width over the target quantities (0 if none)."""
+    rel = []
+    for quantity, target in problem.targets.items():
+        b = raw.get(quantity)
+        if b is None:
+            continue
+        v, low, high = float(b["value"]), float(b["low"]), float(b["high"])
+        rel.append((high - low) / 2.0 / _scale(target, v))
+    return float(np.mean(rel)) if rel else 0.0
 
 
 def _select_diverse(points: list[np.ndarray], lo: np.ndarray, hi: np.ndarray, count: int) -> list[int]:

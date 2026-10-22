@@ -270,12 +270,19 @@ The reference is the **null** predictor: the anchor value with a ±30 % band at 
    of the target over pairs of knobs.
 2. **Bounds.** The optimiser searches within **physical bounds** (solubility, boiling point,
    stability of the reagents, the vessel), not only within the validated region.
-3. **Exploit and explore** (planned).
-   - About 60 % of proposals come from inside the validated region and 40 % from extrapolation:
-     unusual combinations of knobs that the model says are promising.
-   - Each proposal is labelled **inside validated region** or **extrapolation**.
-   - Extrapolations carry wider bands. Their result is valuable either way: it extends the
-     validated region or exposes a failing link.
+3. **Exploit and explore** (built).
+   - Each returned candidate gets a label from the 60/40 batch policy (`lib/design/policy.pick`):
+     **exploit** = best predicted score (kept spread out in knob space), **explore** = widest
+     predicted band, where a measurement teaches the model most. The explore share defaults to
+     40 % and is configurable (`optimize.run(..., explore=...)`).
+   - The labels travel with the proposals (`policy` field) and show as pills on the case and
+     recipe panels.
+   - The 60/40 mix was chosen by benchmarking the policy on five literature optimisation
+     campaigns pool-based, exactly as Liang et al. 2021 (npj Comput Mater 7:188; data MIT,
+     PV-Lab/Benchmarking) benchmark Bayesian optimisation: `lib/design/bench6040.py`, results in
+     `lib/design/data/bench6040.json`, summarised in the "Why 60/40" card of the case panel
+     (/api/bench6040). Explore candidates carry wider bands. Their result is valuable either way:
+     it extends the model's reach or exposes a failing link.
 4. **Novelty.** A candidate within tolerance of a known recipe is dropped.
 5. **Proposals.** Each proposal gives steps, stocks, volumes, heating, addition rate and ageing,
    the expected outcome with its band, quick checks, controls (the nearest known recipe and a
@@ -361,7 +368,7 @@ records the versions it ran under (`protocols` in its JSON), and `/api/agent` li
 | 11 | QA reviewer rounds per method | built |
 | 12 | Blind benchmark against null, with ablation | built |
 | 13 | Sensitivities, maps, optimiser | built |
-| 14 | Physical bounds with a 60/40 exploit/explore mix and labels | planned |
+| 14 | Physical bounds with a 60/40 exploit/explore mix and labels | built |
 | 15 | Stability risk score (new-material mode only, never a gate) | planned |
 | 16 | Recipe with checks and risks; human approval | built |
 | 17 | Protocol package for a self-building lab | partial |
