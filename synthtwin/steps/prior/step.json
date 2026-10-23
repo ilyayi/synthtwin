@@ -3,7 +3,8 @@
   "order": 2,
   "icon": "books",
   "protocols": [
-    "search-data"
+    "search-data",
+    "paper-index"
   ],
   "gate": true,
   "models": {

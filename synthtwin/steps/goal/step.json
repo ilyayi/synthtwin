@@ -3,7 +3,8 @@
   "order": 1,
   "icon": "target",
   "protocols": [
-    "onboard-problem"
+    "onboard-problem",
+    "paper-index"
   ],
   "gate": true,
   "models": {

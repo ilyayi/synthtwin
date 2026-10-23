@@ -285,8 +285,10 @@ def _delegate_text(d: dict) -> str:
 def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: list[dict], held: set[str],
           tools_path: Path | None, budget_min: int = 0, qa_rounds: int = 3,
           progress: Callable[[dict], None] | None = None, poll: float = 60, toolbox: Path | None = None,
-          chain: list[dict] | None = None) -> dict:
+          chain: list[dict] | None = None, index: tuple[str, ...] = ()) -> dict:
     """Run the builder (and its jobs) until model.py passes, then the QA review loop.
+
+    index: the paper index's connector tools (paper-index protocol); the brief then says how to use them.
 
     budget_min=0 means no time limit. progress() gets {stage, round, jobs, sessions, qa,
     delegate?} as work goes on. A mixed team (plan != work) first delegates the methods
@@ -312,6 +314,9 @@ def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: li
                           tools=tools_text(tools_path, toolbox), train=train, held=hold, targets=", ".join(spec["targets"]),
                           knobs=json.dumps(problem["knobs"]), fixed=json.dumps(spec["fixed"]), time_rule=time_rule,
                           install_rule=tb.policy(toolbox, problem.get("problem_id", workdir.name)))
+    if index:
+        prompt += ("\n\n" + protocols.prompt("index.build")
+                   + "\nPaper-index tools (load them by name if they are deferred): " + ", ".join(index))
     resuming = (workdir / "NOTES.md").is_file() and (workdir / "BRIEF.md").is_file()
     (workdir / "BRIEF.md").write_text(prompt)
     t0 = time.time()
@@ -336,7 +341,7 @@ def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: li
 
     def session(p: str, why: str) -> dict:
         tell(stage=why)
-        meta = worker.build(p, workdir, timeout=left())
+        meta = worker.build(p, workdir, timeout=left(), mcp=index)
         cost[0] += meta.get("cost_usd") or 0
         log["sessions"].append({"why": why, "llm": meta.get("llm"), "model": meta.get("model"),
                                 "minutes": round((meta.get("ms") or 0) / 60000, 1),
@@ -408,7 +413,7 @@ def build(llm: Any, workdir: Path, problem: dict, stack: list[dict], studies: li
         tell(stage="QA review")
         r = reviewer.build(REVIEW.format(held=held_titles, knobs=json.dumps(problem["knobs"]), previous=prev),
                            workdir, timeout=None if not deadline else left(), schema=QA_SCHEMA,
-                           tools="Bash,Read,Write,Glob,Grep,WebSearch,WebFetch")
+                           tools="Bash,Read,Write,Glob,Grep,WebSearch,WebFetch", mcp=index)
         cost[0] += r.get("cost_usd") or 0
         qa = r.get("data") or {"overall": "fail", "summary": "the reviewer returned nothing", "methods": [],
                                "model": {"verdict": "fail", "issues": []}}

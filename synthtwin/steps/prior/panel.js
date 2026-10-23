@@ -42,7 +42,7 @@ function triageBox(P){const t=P.triage;if(!t)return P.triage_error?`<div class="
     <div class="twhy">${esc(p.reports||p.why)}</div></li>`;
   return `<details class="triage" open><summary>Paper-index triage · ${ps.length} papers to open first${(t.counts||[]).map(c=>` · ${c.n.toLocaleString()} on “${esc(c.query)}”`).join('')}</summary>
     ${t.reply?`<p class="treply">${esc(t.reply)}</p>`:''}<ol>${ps.map(row).join('')}</ol>
-    <p class="tnote">Leads from an index of abstracts (${esc(t.backend)}); the scout reads the papers for conditions and numbers.</p></details>`}
+    <p class="tnote">Leads from an index of abstracts (${esc(t.backend)}); the scout reads the papers for conditions and numbers.${t.note?' '+esc(t.note):''}</p></details>`}
 function pPrior(s,P){const st=P.studies||[];if(!st.length)return wait(s.busy||'Looking for related studies.');
   const pb=s.problem;const qs=[...new Set([...Object.keys(pb.targets||{}),'size_mean_nm'])];const q=qs.includes(AG.qtab)?AG.qtab:qs[0];
   const n={benchmark:0,library:0,web:0};st.forEach(x=>n[x.source]++);

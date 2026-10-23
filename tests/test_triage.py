@@ -67,3 +67,50 @@ def test_cli_allows_only_the_given_connector_tools(monkeypatch, tmp_path: Path) 
     assert "--strict-mcp-config" not in cmd
     assert cmd[cmd.index("--allowedTools") + 1] == ",".join(triage.BACKENDS["valency"])
     assert "--tools" not in cmd and "Bash" in cmd[cmd.index("--disallowedTools") + 1]
+
+
+# ---------------------------------------------------------------- the paper index across the pipeline
+VAL = triage.BACKENDS["valency"]
+
+
+def test_index_prompt_per_step(agent) -> None:
+    assert agent.index_prompt("stack") == ""                     # off: prompts stay byte-identical
+    agent.cfg.triage = "valency"
+    for step in ("goal", "stack", "sample", "case", "recipe"):
+        txt = agent.index_prompt(step)
+        assert txt.startswith("PAPER INDEX:") and VAL[0] in txt, step
+    assert agent.index_prompt("robot") == "" and agent.index_prompt("bench") == ""
+
+
+def test_turn_allows_the_index(agent, settle) -> None:
+    sid = agent.create("Gold nanoparticles by citrate reduction, 15 nm, narrow")["id"]
+    settle(agent, sid)
+    seen = []
+    orig = agent.cfg.llm.ask
+    agent.cfg.llm.ask = lambda system, prompt, schema, **kw: (seen.append((system, kw)), orig(system, prompt, schema))[1]
+    agent.turn(sid)
+    assert seen[-1][1]["mcp"] == () and "PAPER INDEX" not in seen[-1][0]
+    agent.cfg.triage = "valency"
+    agent.turn(sid)
+    assert seen[-1][1]["mcp"] == VAL and "PAPER INDEX" in seen[-1][0]
+
+
+def test_cli_web_and_index_together_and_builder(monkeypatch, tmp_path: Path) -> None:
+    calls = []
+
+    class R:
+        returncode, stderr = 0, ""
+        stdout = json.dumps({"structured_output": {"reply": ""}, "result": "done"})
+    monkeypatch.setattr(llm.subprocess, "run", lambda cmd, **kw: (calls.append(cmd), R())[1])
+    c = llm.ClaudeCLI()
+    c.ask("sys", "p", {"type": "object"}, web=True, mcp=VAL)
+    cmd = calls[-1]
+    assert "WebSearch" not in cmd[cmd.index("--disallowedTools") + 1].split(",")
+    assert cmd[cmd.index("--allowedTools") + 1] == ",".join(("WebSearch,WebFetch", *VAL))
+    c.build("brief", tmp_path, timeout=None)
+    assert "--strict-mcp-config" in calls[-1] and "--tools" in calls[-1]
+    c.build("brief", tmp_path, timeout=None, mcp=VAL)
+    cmd = calls[-1]
+    assert "--strict-mcp-config" not in cmd and "--tools" not in cmd
+    assert "Bash" not in cmd[cmd.index("--disallowedTools") + 1].split(",")
+    assert cmd[cmd.index("--allowedTools") + 1].endswith(",".join(VAL))

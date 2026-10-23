@@ -33,7 +33,7 @@ import yaml
 
 from synthtwin import protocols, steps
 from synthtwin.core import catalog, harness, runner, systems, toolbox
-from synthtwin.steps.prior import prior
+from synthtwin.steps.prior import prior, triage
 
 # the pipeline's shape comes from the steps' own step.json files (one source of truth)
 ORDER = steps.ORDER
@@ -52,7 +52,7 @@ class AgentConfig(runner.Config):
         self.llm = llm
         self.workers = workers
         self.web = web
-        self.triage = triage                 # paper-index triage before the literature scout (None = off)
+        self.triage = triage                 # the paper index (a triage.BACKENDS name) every step may read; None = off
         self.tools = Path(tools).expanduser() if tools else None   # tools.yaml: engines the builder may use
         self.build_minutes = build_minutes   # 0 = no time limit
         self.qa_rounds = qa_rounds           # QA review rounds after a build (0 = no review)
@@ -142,6 +142,22 @@ class Agent:
             fb = self.cfg.data_dir / "feedback.jsonl"
             self._lib = lib + (drun.load_library(fb) if fb.exists() else [])
         return self._lib
+
+    def index_tools(self) -> tuple[str, ...]:
+        """The paper index's connector tools (the paper-index protocol), or () when it is off."""
+        return triage.BACKENDS.get(self.cfg.triage or "", ())
+
+    def index_prompt(self, step: str) -> str:
+        """The paper-index protocol's text for one step ('' when the index is off or the step has none)."""
+        tools = self.index_tools()
+        if not tools:
+            return ""
+        try:
+            own = protocols.prompt(f"index.{step}")
+        except ValueError:
+            return ""
+        return (protocols.prompt("index.rules") + "\n" + own
+                + "\nPaper-index tools (load them by name if they are deferred): " + ", ".join(tools))
 
     def harness(self) -> harness.Harness:
         """The data dir's self-improving harness (overlays + lessons per step)."""
@@ -342,10 +358,15 @@ a kMC or phase-field code), name it as the tool, mark it '(install)' and include
         system = self.harness().inject(ph, system, ctx)   # the step's overlay + lessons, when present
         if extra:
             prompt = prompt.replace("\n\nWrite your next turn.", f"\n\nNOTE: {extra}\n\nWrite your next turn.")
+        # the paper index (paper-index protocol): its rules + this step's section, with the connector allowed
+        index = self.index_prompt(ph)
+        if index:
+            system += "\n\n" + index
         # the stack designer may search for simulation studies of similar systems (lessons per chain link);
         # the step's step.json "models" picks plan or work for the turn
         ans = self.cfg.llm.role(steps.role(ph, "turn")).ask(system, prompt, SCHEMAS[key],
-                                                            web=bool(self.cfg.web) and ph == "stack")
+                                                            web=bool(self.cfg.web) and ph == "stack",
+                                                            mcp=self.index_tools() if index else ())
         meta = ans.pop("_meta", {}) if isinstance(ans, dict) else {}
         follow = self.mutate(sid, lambda s: self.apply(s, ph, ans, meta))
         if follow:

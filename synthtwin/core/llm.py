@@ -36,6 +36,12 @@ class LLMError(RuntimeError):
 BUILTINS = ("Bash,BashOutput,KillShell,Read,Edit,Write,MultiEdit,NotebookEdit,Glob,Grep,LS,Task,Agent,TodoWrite,"
             "WebFetch,WebSearch,Skill,SlashCommand")
 
+
+def _disallow(allowed: str) -> str:
+    """The built-ins minus the allowed ones: with connectors `--tools` cannot be used (it would hide them)."""
+    keep = set(allowed.split(","))
+    return ",".join(t for t in BUILTINS.split(",") if t not in keep)
+
 # ---------------------------------------------------------------- the registry
 # one entry per named backend: the command prefix that replaces `claude`, its
 # default model, a UI label, frontier|light, and how to test availability
@@ -120,7 +126,7 @@ class ClaudeCLI:
         """mcp: connector tools (e.g. a paper index) the agent may call; only those are allowed."""
         tools = "WebSearch,WebFetch" if web else ""
         # connectors load only when asked for; `--tools` would hide them, so then the built-ins are disallowed
-        tool_args = ["--tools", tools, "--strict-mcp-config"] if not mcp else ["--disallowedTools", BUILTINS]
+        tool_args = ["--tools", tools, "--strict-mcp-config"] if not mcp else ["--disallowedTools", _disallow(tools)]
         cmd = [*self.cmd, "-p", "--model", model or self.model, "--output-format", "json",
                "--no-session-persistence", "--setting-sources", "", *tool_args,
                "--system-prompt", system, "--json-schema", json.dumps(schema)]
@@ -148,14 +154,16 @@ class ClaudeCLI:
 
 
     def build(self, prompt: str, cwd: Path, timeout: int | None, model: str | None = None,
-              schema: dict | None = None, tools: str | None = None) -> dict:
+              schema: dict | None = None, tools: str | None = None, mcp: tuple[str, ...] = ()) -> dict:
         """Claude Code with tools, working in cwd (writes and runs the simulations; timeout None = no limit).
 
-        With a schema the final answer is structured and returned under "data" (used by the QA reviewer)."""
+        With a schema the final answer is structured and returned under "data" (used by the QA reviewer).
+        mcp: connector tools (the paper index) it may call besides the built-ins."""
         tools = tools or "Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch"
+        tool_args = ["--strict-mcp-config", "--tools", tools] if not mcp else ["--disallowedTools", _disallow(tools)]
         cmd = [*self.cmd, "-p", "--model", model or self.model, "--output-format", "json",
-               "--no-session-persistence", "--setting-sources", "", "--strict-mcp-config",
-               "--permission-mode", "acceptEdits", "--tools", tools, "--allowedTools", tools]
+               "--no-session-persistence", "--setting-sources", "", *tool_args,
+               "--permission-mode", "acceptEdits", "--allowedTools", ",".join((tools, *mcp))]
         if schema:
             cmd += ["--json-schema", json.dumps(schema)]
         try:
@@ -198,7 +206,7 @@ class Stub:
 
 
     def build(self, prompt: str, cwd: Path, timeout: int | None, model: str | None = None,
-              schema: dict | None = None, tools: str | None = None) -> dict:
+              schema: dict | None = None, tools: str | None = None, mcp: tuple[str, ...] = ()) -> dict:
         if schema:   # the QA reviewer
             data = self.reviewer(prompt, Path(cwd)) if self.reviewer else {
                 "overall": "pass", "summary": "stub review", "methods": [], "model": {"verdict": "pass", "issues": []}}

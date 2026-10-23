@@ -3,7 +3,8 @@
   "order": 6,
   "icon": "checklist",
   "protocols": [
-    "design"
+    "design",
+    "paper-index"
   ],
   "gate": true,
   "models": {

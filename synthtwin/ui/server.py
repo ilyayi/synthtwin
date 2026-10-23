@@ -620,8 +620,10 @@ def main(argv: list[str] | None = None) -> int:
                                      "see docs/models.example.yaml")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--no-web", action="store_true", help="no literature search in the agent")
-    ap.add_argument("--triage", choices=["valency"], help="rank papers from a paper index before the literature "
-                                                          "scout (needs the connector in the claude CLI); off by default")
+    ap.add_argument("--paper-index", "--triage", dest="triage", choices=["valency", "none"], default="valency",
+                    help="the paper index every step reads (paper-index protocol): triage before the literature "
+                         "scout, simulation precedent, novelty, parameter sources; needs the connector in the "
+                         "claude CLI (default valency; none = off)")
     ap.add_argument("--tools", help="tools.yaml: simulation engines the builder may use for other systems "
                                     "(see examples/tools.yaml)")
     ap.add_argument("--build-minutes", type=int, default=0, help="time budget of one simulator build (0 = no limit)")
@@ -653,7 +655,7 @@ def main(argv: list[str] | None = None) -> int:
     cfg = engine.AgentConfig(a.data, a.library, a.robot, a.cards, a.scores, a.n_eval, vault=a.vault,
                              llm=None if a.llm == "off" else llmmod.make_team(a.llm, a.llm_work, a.llm_model,
                                                                               path=a.models),
-                             workers=a.workers, web=not a.no_web, triage=a.triage, tools=a.tools, build_minutes=a.build_minutes,
+                             workers=a.workers, web=not a.no_web, triage=None if a.triage == "none" else a.triage, tools=a.tools, build_minutes=a.build_minutes,
                              qa_rounds=a.qa_rounds, toolbox=None if a.no_install else a.toolbox)
     srv = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(App(cfg, a.screen_index, viz=a.viz,
                                                                      models=a.models)))

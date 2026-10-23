@@ -3,7 +3,8 @@
   "order": 4,
   "icon": "spread",
   "protocols": [
-    "validate"
+    "validate",
+    "paper-index"
   ],
   "gate": true,
   "models": {

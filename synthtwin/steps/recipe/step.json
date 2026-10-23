@@ -3,7 +3,8 @@
   "order": 7,
   "icon": "flasklist",
   "protocols": [
-    "design"
+    "design",
+    "paper-index"
   ],
   "gate": true,
   "models": {

@@ -3,7 +3,8 @@
   "order": 3,
   "icon": "layers",
   "protocols": [
-    "find-simulations"
+    "find-simulations",
+    "paper-index"
   ],
   "gate": true,
   "models": {

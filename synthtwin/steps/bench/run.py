@@ -48,7 +48,8 @@ def build(agent, sid: str) -> dict:
                         s["phases"]["stack"].get("methods", []), s["phases"]["prior"].get("studies", []),
                         chosen, agent.cfg.tools, bm, agent.cfg.qa_rounds,
                         progress=lambda p: agent.mutate(sid, lambda s: s["phases"]["bench"].update(progress=p)),
-                        toolbox=agent.cfg.toolbox, chain=s["phases"]["stack"].get("chain"))
+                        toolbox=agent.cfg.toolbox, chain=s["phases"]["stack"].get("chain"),
+                        index=agent.index_tools())
     agent.mutate(sid, lambda s: (s["phases"]["bench"].update(build=out), s["phases"]["bench"].pop("progress", None)))
     if not out["check"]["ok"]:
         raise RuntimeError("the built model fails its contract check: " + out["check"]["out"][-300:])

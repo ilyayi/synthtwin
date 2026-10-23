@@ -4,7 +4,8 @@
   "icon": "balance",
   "protocols": [
     "build-and-qa",
-    "validate"
+    "validate",
+    "paper-index"
   ],
   "gate": true,
   "models": {
