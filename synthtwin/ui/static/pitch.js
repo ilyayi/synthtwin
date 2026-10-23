@@ -11,12 +11,6 @@ const PITCH={
     ['robot','Self-driving lab','runs the protocol package'],
     ['chart','Measurements','compared with the prediction'],
   ],
-  facts:[
-    ['16 min','problem → robot-ready protocol','polyimide film, a material with no simulator'],
-    ['7 min · $1.30','to build and run a new simulator','written by a builder agent, checked before use'],
-    ['8 steps','one written protocol for every study','no one-off demos'],
-    ['5 lab campaigns','replayed to test the choosing rule','real measured data, Liang et al. 2021'],
-  ],
 };
 function pitchPage(){
   const n=PITCH.loop.length,R=200,cx=260,cy=250;
@@ -32,7 +26,6 @@ function pitchPage(){
     <div class="pt-loop"><svg viewBox="0 0 520 500" aria-hidden="true"><defs><marker id="pta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="currentColor"/></marker></defs>${arcs}</svg>${nodes}
      <div class="pt-hub"><b>every run</b><span>calibrates the simulator<br>and teaches the agent</span></div></div>
     <div class="pt-side">
-     <div class="pt-facts">${PITCH.facts.map(([v,l,s])=>`<div><b>${v}</b><span>${l}</span><em>${s}</em></div>`).join('')}</div>
      <div class="pt-cols">
       <div><h4>Today</h4><ul>
        <li>One study at a time, a researcher confirms each step</li>
